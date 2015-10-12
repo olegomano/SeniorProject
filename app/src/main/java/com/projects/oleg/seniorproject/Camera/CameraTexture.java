@@ -62,6 +62,10 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
         mRequest =c;
     }
 
+    public int getTexture(){
+        return textureID;
+    }
+
     private int createTexture(){
         int[] textureID = new int[1];
         GLES20.glGenTextures(1, textureID, 0);
@@ -125,6 +129,7 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
                float h1 = FrontCamera.sensorSizeMM.getWidth() - faceOnSensorWmm;
                float h2 = (((h1 + faceOnSensorWmm ) * FACE_WIDTH_MM) / faceOnSensorWmm) - FACE_WIDTH_MM;
                float distance = ((h1 + faceOnSensorWmm)*(FACE_WIDTH_MM + h2) / ( focus + h1 )) - focus;
+               Utils.print("H1,H2,distance: " + h1 + ", " + h2 + ", " + distance);
 
                float xOffset  = ((mFace.getBounds().centerX()*FrontCamera.pixelToMM - (sensorWmm/2.0f))*(focus + distance) )/ focus;
                float yOffset  = ((mFace.getBounds().centerY()*FrontCamera.pixelToMM - (sensorHmm/2.0f))*(focus + distance) )/ focus;
@@ -145,6 +150,7 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
                    haveResult = true;
                    retRes = (retRes + 1) % 2;
                    Utils.print(mResult.toString());
+                   Utils.print("On Thread " + Thread.currentThread().getName());
                }
            };
         }

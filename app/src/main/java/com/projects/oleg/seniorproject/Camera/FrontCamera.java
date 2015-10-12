@@ -3,6 +3,7 @@ package com.projects.oleg.seniorproject.Camera;
 import android.content.Context;
 import android.graphics.Camera;
 import android.graphics.Rect;
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -43,7 +44,7 @@ public class FrontCamera extends CameraDevice.StateCallback{
         sensorAllPixels = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
         sensorActivePixels = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
 
-        pixelToMM = (float)sensorAllPixels.getWidth() / (float)sensorSizeMM.getWidth();
+        pixelToMM = (float)sensorSizeMM.getWidth()/ (float)sensorAllPixels.getWidth() ;
 
     }
 
@@ -53,7 +54,7 @@ public class FrontCamera extends CameraDevice.StateCallback{
         }
 
         StreamConfigurationMap streamMap = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-        Size[] sizes = streamMap.getOutputSizes(Surface.class); //todo: get maximum available size
+        Size[] sizes = streamMap.getOutputSizes(SurfaceTexture.class); //todo: get maximum available size instead of taking first one
         out.configureSurface(sizes[0].getWidth(),sizes[0].getHeight());
 
         CaptureRequest.Builder request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW); //this ones gives highest framerate

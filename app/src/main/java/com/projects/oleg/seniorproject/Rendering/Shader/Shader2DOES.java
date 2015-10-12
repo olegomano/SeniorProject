@@ -26,7 +26,7 @@ public class Shader2DOES {
 
 
     private static final String fragmentShader =
-                    "#extension GL_OES_EGL_image_external : require" +
+                    "#extension GL_OES_EGL_image_external : require\n" +
                     "precision mediump float;" +
                     "varying vec2 vUV;\n" +
                     "uniform samplerExternalOES sTexture;" +

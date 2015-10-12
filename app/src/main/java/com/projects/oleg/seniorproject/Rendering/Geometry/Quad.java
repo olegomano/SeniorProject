@@ -12,7 +12,7 @@ public class Quad extends Renderable {
     protected FloatBuffer vertBuffer;
     protected FloatBuffer uvBuffer;
     public Quad(){
-
+        init();
     }
 
     private void init(){
@@ -27,7 +27,13 @@ public class Quad extends Renderable {
         };
 
         float[] uv = {
+            0,0, //lb
+            0,1,//lt
+            1,1,//rt
 
+            0,0,//lb
+            1,1,//rt
+            1,0 //rb
         };
         vertBuffer = Utils.allocateFloatBuffer(vertex);
         uvBuffer = Utils.allocateFloatBuffer(uv);
