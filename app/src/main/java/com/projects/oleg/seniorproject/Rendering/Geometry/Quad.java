@@ -1,4 +1,4 @@
-package com.projects.oleg.seniorproject.Rendering;
+package com.projects.oleg.seniorproject.Rendering.Geometry;
 
 import com.projects.oleg.seniorproject.Utils;
 
@@ -47,5 +47,10 @@ public class Quad extends Renderable {
     @Override
     public ShortBuffer getIndexBuffer() {
         return null;
+    }
+
+    @Override
+    public int getVertexCount() {
+        return 6;
     }
 }

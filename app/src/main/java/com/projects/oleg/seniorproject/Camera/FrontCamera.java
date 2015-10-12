@@ -7,11 +7,16 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Handler;
 import android.util.Size;
 import android.util.SizeF;
+import android.view.Surface;
 
 import com.projects.oleg.seniorproject.Camera.CameraTexture;
+
+import java.util.Collections;
 
 /**
  * Created by Oleg Tolstov on 8:35 PM, 10/9/15. SeniorProject
@@ -46,7 +51,19 @@ public class FrontCamera extends CameraDevice.StateCallback{
         if(!opened){
             return false;
         }
-        out.setCaptureRequest(camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).build());
+
+        StreamConfigurationMap streamMap = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        Size[] sizes = streamMap.getOutputSizes(Surface.class); //todo: get maximum available size
+        out.configureSurface(sizes[0].getWidth(),sizes[0].getHeight());
+
+        CaptureRequest.Builder request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW); //this ones gives highest framerate
+        for(int i = 0; i < out.getSurfaceList().size(); i++){
+            request.addTarget(out.getSurfaceList().get(i));
+        }
+
+        request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE); //my phone only supports this one
+        out.setCaptureRequest(request.build());
+
         camera.createCaptureSession(out.getSurfaceList(),out,new Handler(mContext.getMainLooper()));
         return true;
     }

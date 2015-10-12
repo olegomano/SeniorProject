@@ -1,4 +1,6 @@
-package com.projects.oleg.seniorproject.Rendering;
+package com.projects.oleg.seniorproject.Rendering.Geometry;
+
+import com.projects.oleg.seniorproject.Rendering.Matrix;
 
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
@@ -17,7 +19,7 @@ public abstract class Renderable {
     public int getVertexVBO(){return -1;}
     public int getUvVBO(){return -1;}
     public int getIndexVBO(){return -1;}
-
+    public abstract int getVertexCount();
 
 
     public boolean usesVertexVBO(){

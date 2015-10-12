@@ -22,7 +22,9 @@ import java.util.LinkedList;
 
 /**
  * Created by Oleg Tolstov on 9:35 PM, 10/10/15. SeniorProject
+ * Manages the camera feed
  */
+
 public class CameraTexture extends CameraCaptureSession.StateCallback{
     private final float FACE_WIDTH_MM = 122;
     private final float FACE_HEIGHT_MM = 122;
@@ -50,7 +52,7 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
         return surfaceList;
     }
 
-    public void configureSurface(int width, int height){
+    public void configureSurface(int width, int height){ //sets the dimentions of the surface
         for(int i = 0; i < sTextureList.size(); i++){
             sTextureList.get(i).setDefaultBufferSize(width,height);
         }
@@ -165,18 +167,6 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
 
         float scaleXGL;
         float scaleYGL;
-
-        public void copy(FaceResult source){
-            distanceInMM = source.distanceInMM;
-            xOffsetInMM = source.xOffsetInMM;
-            yOffsetInMM = source.yOffsetInMM;
-
-            xPositionGL = source.xPositionGL;
-            yPositionGL = source.yPositionGL;
-
-            scaleXGL = source.scaleXGL;
-            scaleYGL = source.scaleYGL;
-        }
 
         public String toString(){
             return "Face Pose(x,y,z): " + xOffsetInMM + " , " + yOffsetInMM + " ," + distanceInMM + " \n GL: (x,y) " + xPositionGL + " " + yPositionGL + " scale: " + scaleXGL + " , " + scaleYGL ;
