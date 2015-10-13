@@ -24,7 +24,6 @@ public class Shader2DOES {
                     "  vUV = aUV;" +
                     "}\n";
 
-
     private static final String fragmentShader =
                     "#extension GL_OES_EGL_image_external : require\n" +
                     "precision mediump float;" +

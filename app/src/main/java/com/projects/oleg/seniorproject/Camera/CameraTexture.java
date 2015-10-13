@@ -34,8 +34,6 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
     private ArrayList<Surface> surfaceList = new ArrayList<>(1);
     private CaptureRequest mRequest;
 
-
-
     private volatile FaceResult[] mResult = { new FaceResult(), new FaceResult()};
     private volatile int retRes = 1;
     private volatile boolean haveResult =false;
@@ -128,8 +126,9 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
 
                float h1 = FrontCamera.sensorSizeMM.getWidth() - faceOnSensorWmm;
                float h2 = (((h1 + faceOnSensorWmm ) * FACE_WIDTH_MM) / faceOnSensorWmm) - FACE_WIDTH_MM;
-               float distance = ((h1 + faceOnSensorWmm)*(FACE_WIDTH_MM + h2) / ( focus + h1 )) - focus;
-               Utils.print("H1,H2,distance: " + h1 + ", " + h2 + ", " + distance);
+               float distance = ( (focus*(h2 + FACE_WIDTH_MM)) /  (h1 + faceOnSensorWmm) ) - focus;
+               float distnace2 = ( (focus*h2) / h1 ) -focus;
+               Utils.print("H1,H2,distance: " + h1 + ", " + h2 + ", " + distance + ", " + distnace2);
 
                float xOffset  = ((mFace.getBounds().centerX()*FrontCamera.pixelToMM - (sensorWmm/2.0f))*(focus + distance) )/ focus;
                float yOffset  = ((mFace.getBounds().centerY()*FrontCamera.pixelToMM - (sensorHmm/2.0f))*(focus + distance) )/ focus;
@@ -164,15 +163,15 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
     }
 
     public class FaceResult{
-        float distanceInMM;
-        float xOffsetInMM;
-        float yOffsetInMM;
+        public float distanceInMM;
+        public float xOffsetInMM;
+        public float yOffsetInMM;
 
-        float xPositionGL;
-        float yPositionGL;
+        public float xPositionGL;
+        public float yPositionGL;
 
-        float scaleXGL;
-        float scaleYGL;
+        public float scaleXGL;
+        public float scaleYGL;
 
         public String toString(){
             return "Face Pose(x,y,z): " + xOffsetInMM + " , " + yOffsetInMM + " ," + distanceInMM + " \n GL: (x,y) " + xPositionGL + " " + yPositionGL + " scale: " + scaleXGL + " , " + scaleYGL ;

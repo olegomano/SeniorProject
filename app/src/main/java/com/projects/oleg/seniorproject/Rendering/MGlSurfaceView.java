@@ -63,6 +63,9 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
     @Override
     public void onDrawFrame(GL10 gl) {
         videoTexture.updateTexture();
+        if(videoTexture.getFaceResult() != null){
+
+        }
         draw2DOES(videoFeed);
     }
 
