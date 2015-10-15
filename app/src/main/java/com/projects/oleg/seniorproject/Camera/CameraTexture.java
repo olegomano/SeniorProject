@@ -115,8 +115,6 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
            if(result.get(TotalCaptureResult.STATISTICS_FACES).length != 0){
                float focus = request.get(CaptureRequest.LENS_FOCAL_LENGTH);
                Face mFace = result.get(TotalCaptureResult.STATISTICS_FACES)[0];
-               float faceWidthPix = mFace.getBounds().width();
-               float faceHeightPix = mFace.getBounds().width();
 
                float faceOnSensorWmm = mFace.getBounds().width()*FrontCamera.pixelToMM;
                float faceOnSensorHmm = mFace.getBounds().height()*FrontCamera.pixelToMM;
@@ -128,6 +126,8 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
                float h2 = (((h1 + faceOnSensorWmm ) * FACE_WIDTH_MM) / faceOnSensorWmm) - FACE_WIDTH_MM;
                float distance = ( (focus*(h2 + FACE_WIDTH_MM)) /  (h1 + faceOnSensorWmm) ) - focus;
                float distnace2 = ( (focus*h2) / h1 ) -focus;
+
+
                Utils.print("H1,H2,distance: " + h1 + ", " + h2 + ", " + distance + ", " + distnace2);
 
                float xOffset  = ((mFace.getBounds().centerX()*FrontCamera.pixelToMM - (sensorWmm/2.0f))*(focus + distance) )/ focus;
