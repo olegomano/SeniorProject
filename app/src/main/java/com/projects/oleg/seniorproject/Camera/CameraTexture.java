@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Surface;
 
+import com.projects.oleg.seniorproject.Rendering.Texture;
 import com.projects.oleg.seniorproject.Utils;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
     private final float FACE_WIDTH_MM = 122;
     private final float FACE_HEIGHT_MM = 122;
 
-    private int textureID;
+    private Texture texture;
     private ArrayList<SurfaceTexture> sTextureList = new ArrayList<>(1);
     private ArrayList<Surface> surfaceList = new ArrayList<>(1);
     private CaptureRequest mRequest;
@@ -39,8 +40,8 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
     private volatile boolean haveResult =false;
 
     public CameraTexture(){
-        textureID = createTexture();
-        SurfaceTexture surfaceTexture = new SurfaceTexture(textureID);
+        texture = new Texture(createTexture(),GLES11Ext.GL_TEXTURE_EXTERNAL_OES);
+        SurfaceTexture surfaceTexture = new SurfaceTexture(texture.getTexture());
         Surface surface = new Surface(surfaceTexture);
         sTextureList.add(surfaceTexture);
         surfaceList.add(surface);
@@ -60,8 +61,8 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
         mRequest =c;
     }
 
-    public int getTexture(){
-        return textureID;
+    public Texture getTexture(){
+        return texture;
     }
 
     private int createTexture(){
@@ -126,7 +127,6 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
                float h2 = (((h1 + faceOnSensorWmm ) * FACE_WIDTH_MM) / faceOnSensorWmm) - FACE_WIDTH_MM;
                float distance = ( (focus*(h2 + FACE_WIDTH_MM)) /  (h1 + faceOnSensorWmm) ) - focus;
                float distnace2 = ( (focus*h2) / h1 ) -focus;
-
 
                Utils.print("H1,H2,distance: " + h1 + ", " + h2 + ", " + distance + ", " + distnace2);
 

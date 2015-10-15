@@ -1,6 +1,7 @@
 package com.projects.oleg.seniorproject.Rendering.Geometry;
 
 import com.projects.oleg.seniorproject.Rendering.Matrix;
+import com.projects.oleg.seniorproject.Rendering.Texture;
 
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
@@ -9,7 +10,7 @@ import java.nio.ShortBuffer;
  * Created by Oleg Tolstov on 10:56 PM, 10/11/15. SeniorProject
  */
 public abstract class Renderable {
-    protected int texture;
+    protected Texture texture;
     protected Matrix modelMatrix = new Matrix();
 
     public abstract FloatBuffer getVertexBuffer();
@@ -40,11 +41,11 @@ public abstract class Renderable {
 
 
 
-    public int getTexture(){
+    public Texture getTexture(){
         return texture;
     }
 
-    public void setTexture(int t){
+    public void setTexture(Texture t){
         texture = t;
     }
 
