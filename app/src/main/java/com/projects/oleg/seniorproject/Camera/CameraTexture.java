@@ -35,7 +35,7 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
     private ArrayList<Surface> surfaceList = new ArrayList<>(1);
     private CaptureRequest mRequest;
 
-    private volatile FaceResult[] mResult = { new FaceResult(), new FaceResult()};
+    private volatile FaceResult mResult = new FaceResult();
     private volatile int retRes = 1;
     private volatile boolean haveResult =false;
 
@@ -85,20 +85,18 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
         }
     }
 
-    public FaceResult getFaceResult(){
-        synchronized (this){
-            if(haveResult) {
-                return mResult[1- retRes];
-            }else{
-                return null;
-            }
+    public FaceResult getFaceResult() {
+        if (haveResult) {
+            return mResult;
+        } else {
+            return null;
         }
-
     }
 
     @Override
     public void onConfigured(CameraCaptureSession session) {
         try {
+            Utils.print("Session created, sending request");
             session.setRepeatingRequest(mRequest, new CaptureCallback(), new Handler(Looper.getMainLooper()));
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -111,53 +109,53 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
     }
 
     private class CaptureCallback extends CameraCaptureSession.CaptureCallback{
-        public synchronized void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result){
-           super.onCaptureCompleted(session, request, result);
-           if(result.get(TotalCaptureResult.STATISTICS_FACES).length != 0){
-               float focus = request.get(CaptureRequest.LENS_FOCAL_LENGTH);
-               Face mFace = result.get(TotalCaptureResult.STATISTICS_FACES)[0];
+        public  void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
+            super.onCaptureCompleted(session, request, result);
+            if (result.get(TotalCaptureResult.STATISTICS_FACES).length != 0) {
+                float focus = request.get(CaptureRequest.LENS_FOCAL_LENGTH);
+                Face mFace = result.get(TotalCaptureResult.STATISTICS_FACES)[0];
 
-               float faceOnSensorWmm = mFace.getBounds().width()*FrontCamera.pixelToMM;
-               float faceOnSensorHmm = mFace.getBounds().height()*FrontCamera.pixelToMM;
+                float faceOnSensorWmm = mFace.getBounds().width() * FrontCamera.pixelToMM;
+                float faceOnSensorHmm = mFace.getBounds().height() * FrontCamera.pixelToMM;
 
-               float sensorWmm = FrontCamera.sensorSizeMM.getWidth();
-               float sensorHmm = FrontCamera.sensorSizeMM.getHeight();
+                float sensorWmm = FrontCamera.sensorSizeMM.getWidth();
+                float sensorHmm = FrontCamera.sensorSizeMM.getHeight();
 
-               float h1 = FrontCamera.sensorSizeMM.getWidth() - faceOnSensorWmm;
-               float h2 = (((h1 + faceOnSensorWmm ) * FACE_WIDTH_MM) / faceOnSensorWmm) - FACE_WIDTH_MM;
-               float distance = ( (focus*(h2 + FACE_WIDTH_MM)) /  (h1 + faceOnSensorWmm) ) - focus;
-               float distnace2 = ( (focus*h2) / h1 ) -focus;
+                float h1 = FrontCamera.sensorSizeMM.getWidth() - faceOnSensorWmm;
+                float h2 = (((h1 + faceOnSensorWmm) * FACE_WIDTH_MM) / faceOnSensorWmm) - FACE_WIDTH_MM;
+                float distance = ((focus * (h2 + FACE_WIDTH_MM)) / (h1 + faceOnSensorWmm)) - focus;
+                float distnace2 = ((focus * h2) / h1) - focus;
 
-               Utils.print("H1,H2,distance: " + h1 + ", " + h2 + ", " + distance + ", " + distnace2);
+                Utils.print("H1,H2,distance: " + h1 + ", " + h2 + ", " + distance + ", " + distnace2);
 
-               float xOffset  = ((mFace.getBounds().centerX()*FrontCamera.pixelToMM - (sensorWmm/2.0f))*(focus + distance) )/ focus;
-               float yOffset  = ((mFace.getBounds().centerY()*FrontCamera.pixelToMM - (sensorHmm/2.0f))*(focus + distance) )/ focus;
+                float xOffset = ((mFace.getBounds().centerX() * FrontCamera.pixelToMM - (sensorWmm / 2.0f)) * (focus + distance)) / focus;
+                float yOffset = ((mFace.getBounds().centerY() * FrontCamera.pixelToMM - (sensorHmm / 2.0f)) * (focus + distance)) / focus;
 
-               float xPositionGL = Utils.rerange(0,FrontCamera.sensorActivePixels.width(),-1,1,mFace.getBounds().centerX());
-               float yPositionGL = Utils.rerange(0,FrontCamera.sensorActivePixels.height(),-1,1,mFace.getBounds().centerY());
+                float xPositionGL = Utils.rerange(0, FrontCamera.sensorActivePixels.width(), -1, 1, mFace.getBounds().centerX());
+                float yPositionGL = Utils.rerange(0, FrontCamera.sensorActivePixels.height(), -1, 1, mFace.getBounds().centerY());
+                synchronized (this) {
+                    mResult.distanceInMM = distance;
+                    mResult.xOffsetInMM = xOffset;
+                    mResult.yOffsetInMM = yOffset;
+                    mResult.xPositionGL = xPositionGL;
+                    mResult.yPositionGL = yPositionGL;
+                    mResult.scaleXGL = (float) mFace.getBounds().width() / (float) FrontCamera.sensorActivePixels.width();
+                    mResult.scaleYGL = (float) mFace.getBounds().height() / (float) FrontCamera.sensorActivePixels.height();
+                    haveResult = true;
+                    retRes = (retRes + 1) % 2;
+                    Utils.print(mResult.toString());
+                    Utils.print("On Thread " + Thread.currentThread().getName());
+                }
+            } else {
+                synchronized (this) {
+                    haveResult = false;
+                }
+            }
 
-               FaceResult mResult = CameraTexture.this.mResult[retRes];
-               mResult = new FaceResult();
-               mResult.distanceInMM = distance;
-               mResult.xOffsetInMM = xOffset;
-               mResult.yOffsetInMM = yOffset;
-               mResult.xPositionGL = xPositionGL;
-               mResult.yPositionGL = yPositionGL;
-               mResult.scaleXGL = (float) mFace.getBounds().width() / (float) FrontCamera.sensorActivePixels.width();
-               mResult.scaleYGL = (float) mFace.getBounds().height() / (float) FrontCamera.sensorActivePixels.height();
-               synchronized (this){
-                   haveResult = true;
-                   retRes = (retRes + 1) % 2;
-                   Utils.print(mResult.toString());
-                   Utils.print("On Thread " + Thread.currentThread().getName());
-               }
-           };
         }
 
         public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request, CaptureFailure failure) {
-            synchronized (this){
-                haveResult = false;
-            }
+
         }
 
     }

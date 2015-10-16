@@ -39,8 +39,6 @@ public abstract class Renderable {
         return false;
     }
 
-
-
     public Texture getTexture(){
         return texture;
     }
