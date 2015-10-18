@@ -31,7 +31,7 @@ public class Shader3D {
                     "varying    vec2 vUV;" +
                     "uniform    sampler2D texture;"+
                     "void main() {" +
-                    "   gl_FragColor = vec4(vUV.x,vUV.y,vUV.x*vUV.y,1);"+
+                    "   gl_FragColor = texture2D(texture,vUV);"+
                     "}";
 
     private int programHandle = -1;

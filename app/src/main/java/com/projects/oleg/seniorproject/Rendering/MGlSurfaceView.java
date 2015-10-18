@@ -3,7 +3,6 @@ package com.projects.oleg.seniorproject.Rendering;
 import android.content.Context;
 import android.hardware.camera2.CameraAccessException;
 import android.opengl.*;
-import android.test.UiThreadTest;
 import android.util.AttributeSet;
 
 import com.projects.oleg.seniorproject.Camera.CameraTexture;
@@ -16,8 +15,6 @@ import com.projects.oleg.seniorproject.Rendering.Geometry.Renderable;
 import com.projects.oleg.seniorproject.Rendering.Shader.Shader2D;
 import com.projects.oleg.seniorproject.Rendering.Shader.Shader3D;
 import com.projects.oleg.seniorproject.Utils;
-
-import java.io.PrintStream;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -43,6 +40,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
     private CameraTexture videoTexture;
     private FrontCamera fCamera;
     private Texture faceBoundTxt;
+    private Texture cubeTxt;
 
 
 
@@ -78,14 +76,17 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         GLES20.glDisable(GLES20.GL_CULL_FACE);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        cubeTxt = Texture.loadTexture(getContext(),R.drawable.cube_texture);
         shader2D.compile();
         shader3D.compile();
         camera.getMatrix().setPosition(0, 0, -5);
         camera.createFrustrum(1, 100, -1, 1, -1, 1);
-        cube2.getModelMatrix().setPosition(0, 0, -15);
-        cube.getModelMatrix().setPosition(0, 0, -1);
-        cube.getModelMatrix().mulScale(1,1,1);
-        cube2.getModelMatrix().mulScale(4,4,4);
+        cube2.getModelMatrix().setPosition(0, 0, -5);
+        cube.getModelMatrix().setPosition(0, 0, 0);
+        cube.getModelMatrix().mulScale(1, 1, 1);
+        cube.setTexture(cubeTxt);
+        cube2.setTexture(cubeTxt);
+        //cube2.getModelMatrix().mulScale(4,4,4);
 
 
         videoTexture = new CameraTexture();
@@ -147,20 +148,20 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
                 float screenX = -camY;
                 float screenY = camX;
 
-                float screenL = screenX - screenWInches;
-                float screenR = screenX + screenWInches;
+                float screenL = screenX - screenWInches/2;
+                float screenR = screenX + screenWInches/2;
 
-                float screenT = screenY + screenHInches;
-                float screenB = screenY - screenHInches;
-
-                camera.createFrustrum(camDistance,camDistance + 25,screenL,screenR,screenB,screenT);
-
-                draw3D(cube);
-                draw3D(cube2);
+                float screenT = screenY + screenHInches/2;
+                float screenB = screenY - screenHInches/2;
+                camera.createFrustrum(camDistance * .5f, camDistance + 25, screenR * .5f, screenL * .5f, screenT * .5f, screenB * .5f);
                 //draw2D(faceTracker);
             }
         }
-        //cube2.getModelMatrix().rotate(1,.3f,.3f,0);
+
+        draw3D(cube);
+        draw3D(cube2);
+
+        //cube.getModelMatrix().rotate(1,.3f,.3f,0);
    }
 
     private void draw2D(Renderable renderable){
@@ -217,11 +218,16 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         Utils.checkGlError("glUniform1f screenRatio");
 
 
-        android.opengl.Matrix.multiplyMM(mvpMat,0,camera.getProjectionCamera(),0,renderable.getModelMatrix().getMatrix(),0);
+        android.opengl.Matrix.multiplyMM(mvpMat, 0, camera.getProjectionCamera(), 0, renderable.getModelMatrix().getMatrix(), 0);
         GLES20.glUniformMatrix4fv(shader3D.getMvpMatHandle(), 1, false, mvpMat, 0);
         Utils.checkGlError("Passed uniform matrix");
         GLES20.glUniform3fv(shader3D.getScaleHandle(), 1, renderable.getModelMatrix().getScale(), 0);
         Utils.checkGlError("passed scale");
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, renderable.getTexture().getTexture());
+        GLES20.glUniform1i(shader3D.getSamplerHandle(), 0);
+        Utils.checkGlError("Passed texture");
 
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, renderable.getVertexCount(), GLES20.GL_UNSIGNED_SHORT, renderable.getIndexBuffer());
 

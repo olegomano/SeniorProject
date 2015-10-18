@@ -28,8 +28,8 @@ import java.util.LinkedList;
  */
 
 public class CameraTexture extends CameraCaptureSession.StateCallback{
-    private final float FACE_HEIGHT_MM = 165;
-    private final float FACE_WIDTH_MM = 165;
+    private final float FACE_HEIGHT_MM = 145;
+    private final float FACE_WIDTH_MM = 145;
 
     private Texture texture;
     private ArrayList<SurfaceTexture> sTextureList = new ArrayList<>(1);

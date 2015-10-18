@@ -15,15 +15,16 @@ public class Cube extends Renderable {
     protected int vertCount = 0;
     public Cube(){
         float[] verts = {
-            1, 1,1,1, //rt f
-            1,-1,1,1, //rb f
-           -1, 1,1,1, //lt f
-           -1,-1,1,1, //lb f
+            .5f, .5f,.5f,1, //rt f
+            .5f,-.5f,.5f,1, //rb f
+           -.5f, .5f,.5f,1, //lt f
+           -.5f,-.5f,.5f,1, //lb f
 
-            1, 1, -1,1, //rt f
-            1,-1, -1,1, //rb f
-           -1, 1, -1,1,
-           -1,-1, -1,1,
+           .5f, .5f,-.5f,1, //rt f
+           .5f,-.5f,-.5f,1, //rb f
+          -.5f, .5f,-.5f,1, //lt f
+          -.5f,-.5f,-.5f,1, //lb f
+
         };
 
         float[] uv = {

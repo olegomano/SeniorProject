@@ -7,7 +7,7 @@
         android:textSize="25dp"
         android:id="@+id/text_view"
         android:layout_width="fill_parent"
-        android:layout_height="155dp" />
+        android:layout_height="45dp" />
 
     <com.projects.oleg.seniorproject.Rendering.MGlSurfaceView
         android:id="@+id/camera_view"
