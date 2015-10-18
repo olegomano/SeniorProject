@@ -4,10 +4,10 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:textSize="45dp"
+        android:textSize="25dp"
         android:id="@+id/text_view"
         android:layout_width="fill_parent"
-        android:layout_height="145dp" />
+        android:layout_height="155dp" />
 
     <com.projects.oleg.seniorproject.Rendering.MGlSurfaceView
         android:id="@+id/camera_view"

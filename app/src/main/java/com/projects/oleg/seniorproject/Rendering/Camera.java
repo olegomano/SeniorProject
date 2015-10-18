@@ -31,13 +31,12 @@ public class Camera {
                 0,0,-1,0
         };
         //System.arraycopy(f, 0, projection, 0, f.length);
-        android.opengl.Matrix.frustumM(projection, 0, right, left, top, bottom, 3, 100);
+        android.opengl.Matrix.frustumM(projection, 0, left, right, bottom, top, near, far);
     }
 
     public float[] getProjectionCamera(){
         mMatrix.getInverse(buff);
         android.opengl.Matrix.multiplyMM(projectionCamera, 0, projection, 0, mMatrix.getMatrix(), 0);
-        Utils.print(toString());
         return projectionCamera;
     }
 

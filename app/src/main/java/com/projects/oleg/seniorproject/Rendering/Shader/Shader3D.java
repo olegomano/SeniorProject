@@ -23,10 +23,6 @@ public class Shader3D {
                     "  scaledVert.z*=scale.z;"+
                     "  gl_Position = mvpMat*scaledVert;"+
                     "  gl_Position.y*=screenRatio;"+
-               //     "  gl_Position.x/=gl_Position.w;"+
-               //     "  gl_Position.y/=gl_Position.w;"+
-               //     "  gl_Position.z/=gl_Position.w; "+
-               //     "  gl_Position.w = 1.0f;"+
                     "  vUV = aUV;" +
                     "}\n";
 

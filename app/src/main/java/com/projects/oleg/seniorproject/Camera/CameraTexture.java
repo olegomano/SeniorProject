@@ -28,8 +28,8 @@ import java.util.LinkedList;
  */
 
 public class CameraTexture extends CameraCaptureSession.StateCallback{
-    private final float FACE_HEIGHT_MM = 152;
-    private final float FACE_WIDTH_MM = 152;
+    private final float FACE_HEIGHT_MM = 165;
+    private final float FACE_WIDTH_MM = 165;
 
     private Texture texture;
     private ArrayList<SurfaceTexture> sTextureList = new ArrayList<>(1);
@@ -151,7 +151,7 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
                     Utils.print(mResult.toString());
                     Utils.print("On Thread " + Thread.currentThread().getName());
                 }
-                MainActivity.output.setText("Distance: " + distance + ", " + distnaceh);
+                MainActivity.output.setText("Distance: " + distance*Utils.MM_TO_INCH + ", " + distnaceh*Utils.MM_TO_INCH);
             } else {
                 synchronized (this) {
                     haveResult = false;

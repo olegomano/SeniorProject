@@ -8,6 +8,7 @@ import android.util.AttributeSet;
 
 import com.projects.oleg.seniorproject.Camera.CameraTexture;
 import com.projects.oleg.seniorproject.Camera.FrontCamera;
+import com.projects.oleg.seniorproject.MainActivity;
 import com.projects.oleg.seniorproject.R;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Cube;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Quad;
@@ -25,6 +26,9 @@ import javax.microedition.khronos.opengles.GL10;
  * Created by Oleg Tolstov on 3:18 PM, 10/12/15. SeniorProject
  */
 public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer{
+    private float screenWInches;
+    private float screenHInches;
+
     private Shader2D shader2D = new Shader2D();
     private Shader3D shader3D = new Shader3D();
 
@@ -34,6 +38,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
     private Quad videoFeed = new Quad();
     private Quad faceTracker = new Quad();
     private Cube cube = new Cube();
+    private Cube cube2 = new Cube();
 
     private CameraTexture videoTexture;
     private FrontCamera fCamera;
@@ -68,7 +73,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GLES20.glClearColor(1, 1, 0, 1);
+        GLES20.glClearColor(0, 0, 0, 1);
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glDisable(GLES20.GL_CULL_FACE);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
@@ -77,6 +82,12 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         shader3D.compile();
         camera.getMatrix().setPosition(0, 0, -5);
         camera.createFrustrum(1, 100, -1, 1, -1, 1);
+        cube2.getModelMatrix().setPosition(0, 0, -15);
+        cube.getModelMatrix().setPosition(0, 0, -1);
+        cube.getModelMatrix().mulScale(1,1,1);
+        cube2.getModelMatrix().mulScale(4,4,4);
+
+
         videoTexture = new CameraTexture();
         faceBoundTxt = Texture.loadTexture(getContext(), R.drawable.face_boundbox);
         Utils.print("Created face_boundbox " + faceBoundTxt.getTexture() + " " + faceBoundTxt.getType());
@@ -95,7 +106,10 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        screenRatio = (float) width / (float) height;
+        screenRatio = 1;
+        screenHInches = (float)height/ MainActivity.PPI_Y;
+        screenWInches = (float)width/ MainActivity.PPI_X;
+        Utils.print("Screen size is(in) " + screenWInches + ", " + screenHInches);
     }
 
 
@@ -120,17 +134,34 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         getFps();
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         videoTexture.updateTexture();
+       // draw2D(videoFeed);
         synchronized (videoTexture) {
             CameraTexture.FaceResult face = videoTexture.getFaceResult();
             if (face != null) {
-                faceTracker.getModelMatrix().setPosition(-face.yPositionGL, face.xPositionGL, 0);
-                faceTracker.getModelMatrix().setScale(face.scaleXGL, face.scaleYGL, 1);
-       //         draw2D(faceTracker);
+                faceTracker.getModelMatrix().setPosition(face.xPositionGL,face.yPositionGL,0);
+                float camDistance = face.distanceInMM*Utils.MM_TO_INCH;
+                float camX = face.xOffsetInMM*Utils.MM_TO_INCH;
+                float camY = face.yOffsetInMM*Utils.MM_TO_INCH;
+                camera.getMatrix().setPosition(-camY, camX, -camDistance);
+                Utils.print("Camera pos: " + camX + ", " + camY + " " + camDistance );
+                float screenX = -camY;
+                float screenY = camX;
+
+                float screenL = screenX - screenWInches;
+                float screenR = screenX + screenWInches;
+
+                float screenT = screenY + screenHInches;
+                float screenB = screenY - screenHInches;
+
+                camera.createFrustrum(camDistance,camDistance + 25,screenL,screenR,screenB,screenT);
+
+                draw3D(cube);
+                draw3D(cube2);
+                //draw2D(faceTracker);
             }
         }
-        cube.getModelMatrix().rotate(1,.3f,.3f,0);
-        draw3D(cube);
-    }
+        //cube2.getModelMatrix().rotate(1,.3f,.3f,0);
+   }
 
     private void draw2D(Renderable renderable){
         GLES20.glUseProgram(shader2D.getProgramHandle());
