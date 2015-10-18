@@ -1,5 +1,7 @@
 package com.projects.oleg.seniorproject.Rendering;
 
+import com.projects.oleg.seniorproject.Utils;
+
 /**
  * Created by Oleg Tolstov on 10:58 PM, 10/11/15. SeniorProject
  */
@@ -30,7 +32,7 @@ public class Matrix {
     }
 
     public void lookAt(float x, float y, float z){
-
+        
     }
 
     public void create(float[] right, float[] up, float[] forward){
@@ -56,6 +58,10 @@ public class Matrix {
         scale[0] = x;
         scale[1] = y;
         scale[2] = z;
+    }
+
+    public String toString(){
+        return Utils.matToString(matrix);
     }
 
 }

@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Surface;
 
+import com.projects.oleg.seniorproject.MainActivity;
 import com.projects.oleg.seniorproject.Rendering.Texture;
 import com.projects.oleg.seniorproject.Utils;
 
@@ -27,8 +28,8 @@ import java.util.LinkedList;
  */
 
 public class CameraTexture extends CameraCaptureSession.StateCallback{
-    private final float FACE_WIDTH_MM = 122;
-    private final float FACE_HEIGHT_MM = 122;
+    private final float FACE_HEIGHT_MM = 152;
+    private final float FACE_WIDTH_MM = 152;
 
     private Texture texture;
     private ArrayList<SurfaceTexture> sTextureList = new ArrayList<>(1);
@@ -121,12 +122,16 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
                 float sensorWmm = FrontCamera.sensorSizeMM.getWidth();
                 float sensorHmm = FrontCamera.sensorSizeMM.getHeight();
 
-                float h1 = FrontCamera.sensorSizeMM.getWidth() - faceOnSensorWmm;
-                float h2 = (((h1 + faceOnSensorWmm) * FACE_WIDTH_MM) / faceOnSensorWmm) - FACE_WIDTH_MM;
-                float distance = ((focus * (h2 + FACE_WIDTH_MM)) / (h1 + faceOnSensorWmm)) - focus;
-                float distnace2 = ((focus * h2) / h1) - focus;
+                float w1 = FrontCamera.sensorSizeMM.getWidth() - mFace.getBounds().right * FrontCamera.pixelToMM;
+                float w2 = (((w1 + faceOnSensorWmm) * FACE_HEIGHT_MM) / faceOnSensorWmm) - FACE_HEIGHT_MM;
+                float distance = ((focus * w2) / w1) - focus;
 
-                Utils.print("H1,H2,distance: " + h1 + ", " + h2 + ", " + distance + ", " + distnace2);
+                float h1 = FrontCamera.sensorSizeMM.getHeight() - mFace.getBounds().bottom * FrontCamera.pixelToMM;
+                float h2 = (((h1 + faceOnSensorHmm) * FACE_WIDTH_MM) / faceOnSensorHmm) - FACE_WIDTH_MM;
+                float distnaceh = ((focus * h2) / h1) - focus;
+
+
+                Utils.print("H1,H2,distance: " + w1 + ", " + w2 + ", " + distance );
 
                 float xOffset = ((mFace.getBounds().centerX() * FrontCamera.pixelToMM - (sensorWmm / 2.0f)) * (focus + distance)) / focus;
                 float yOffset = ((mFace.getBounds().centerY() * FrontCamera.pixelToMM - (sensorHmm / 2.0f)) * (focus + distance)) / focus;
@@ -146,6 +151,7 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
                     Utils.print(mResult.toString());
                     Utils.print("On Thread " + Thread.currentThread().getName());
                 }
+                MainActivity.output.setText("Distance: " + distance + ", " + distnaceh);
             } else {
                 synchronized (this) {
                     haveResult = false;

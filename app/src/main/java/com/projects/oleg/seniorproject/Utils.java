@@ -12,6 +12,7 @@ import java.nio.ShortBuffer;
  * Created by Oleg Tolstov on 9:36 PM, 10/10/15. SeniorProject
  */
 public class Utils {
+    public static final float MM_TO_INCH = 0.0393701f;
 
     public static void print(String s){
         if(s!=null){
@@ -69,7 +70,7 @@ public class Utils {
     public static void checkGlError(String op) {
         int error;
         while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
-            print( op + ": glError " + error);
+            print(op + ": glError " + error);
             throw new RuntimeException(op + ": glError " + error);
         }
     }
@@ -91,6 +92,14 @@ public class Utils {
         fb.put(arr);
         fb.position(0);
         return fb;
+    }
+
+    public static String matToString(float[] matrix){
+        String rets = "[ " + matrix[0] + ", " + matrix[1] + ", " + matrix[2] + ", "+matrix[3] + "] \n";
+        rets += "[ " +       matrix[4] + ", " + matrix[5] + ", " + matrix[6] + ", "+matrix[7] + "] \n";
+        rets += "[ " +       matrix[8] + ", " + matrix[9] + ", " + matrix[10] + ", "+matrix[11] + "] \n";
+        rets += "[ " +       matrix[12] + ", " + matrix[12] + ", " + matrix[14] + ", "+matrix[15] + "] \n";
+        return rets;
     }
 
 
