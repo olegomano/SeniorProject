@@ -9,6 +9,7 @@ import com.projects.oleg.seniorproject.Camera.CameraTexture;
 import com.projects.oleg.seniorproject.Camera.FrontCamera;
 import com.projects.oleg.seniorproject.MainActivity;
 import com.projects.oleg.seniorproject.R;
+import com.projects.oleg.seniorproject.Rendering.Geometry.Box;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Cube;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Quad;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Renderable;
@@ -36,11 +37,13 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
     private Quad faceTracker = new Quad();
     private Cube cube = new Cube();
     private Cube cube2 = new Cube();
+    private Box box = new Box();
 
     private CameraTexture videoTexture;
     private FrontCamera fCamera;
     private Texture faceBoundTxt;
     private Texture cubeTxt;
+    private Texture woodTxt;
 
 
 
@@ -77,6 +80,9 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         cubeTxt = Texture.loadTexture(getContext(),R.drawable.cube_texture);
+        faceBoundTxt = Texture.loadTexture(getContext(), R.drawable.face_boundbox);
+        woodTxt = Texture.loadTexture(getContext(),R.drawable.box_dark_texture);
+
         shader2D.compile();
         shader3D.compile();
         camera.getMatrix().setPosition(0, 0, -5);
@@ -86,11 +92,14 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         cube.getModelMatrix().mulScale(1, 1, 1);
         cube.setTexture(cubeTxt);
         cube2.setTexture(cubeTxt);
+        box.setTexture(woodTxt);
+
+        box.getModelMatrix().setScale(1, 1, 10);
+        box.getModelMatrix().setPosition(0,0,-5);
         //cube2.getModelMatrix().mulScale(4,4,4);
 
 
         videoTexture = new CameraTexture();
-        faceBoundTxt = Texture.loadTexture(getContext(), R.drawable.face_boundbox);
         Utils.print("Created face_boundbox " + faceBoundTxt.getTexture() + " " + faceBoundTxt.getType());
         try {
             while(!fCamera.start(videoTexture)){
@@ -111,6 +120,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         screenHInches = (float)height/ MainActivity.PPI_Y;
         screenWInches = (float)width/ MainActivity.PPI_X;
         Utils.print("Screen size is(in) " + screenWInches + ", " + screenHInches);
+        box.getModelMatrix().mulScale(screenWInches*1.15f,screenHInches*1.15f,1);
     }
 
 
@@ -141,8 +151,8 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
             if (face != null) {
                 faceTracker.getModelMatrix().setPosition(face.xPositionGL,face.yPositionGL,0);
                 float camDistance = face.distanceInMM*Utils.MM_TO_INCH;
-                float camX = face.xOffsetInMM*Utils.MM_TO_INCH;
-                float camY = face.yOffsetInMM*Utils.MM_TO_INCH;
+                float camX = face.xOffsetInMM*Utils.MM_TO_INCH*.65f;
+                float camY = face.yOffsetInMM*Utils.MM_TO_INCH*.65f;
                 camera.getMatrix().setPosition(-camY, camX, -camDistance);
                 Utils.print("Camera pos: " + camX + ", " + camY + " " + camDistance );
                 float screenX = -camY;
@@ -159,7 +169,8 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         }
 
         draw3D(cube);
-        draw3D(cube2);
+        //draw3D(cube2);
+        draw3D(box);
 
         //cube.getModelMatrix().rotate(1,.3f,.3f,0);
    }
