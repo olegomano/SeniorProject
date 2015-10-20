@@ -66,10 +66,6 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         }
         setEGLContextClientVersion(2);
         setRenderer(this);
-
-        if(OpenCVLoader.initDebug()){
-            Utils.print("CV HAS BEEIN INTIALIZED");
-        };
     }
 
 
@@ -77,6 +73,12 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        if(OpenCVLoader.initDebug()){
+            Utils.print("CV HAS BEEIN INTIALIZED");
+        }else{
+            Utils.print("Failed initializing openCV");
+        };
+
         GLES20.glClearColor(0, 0, 0, 1);
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glDisable(GLES20.GL_CULL_FACE);
