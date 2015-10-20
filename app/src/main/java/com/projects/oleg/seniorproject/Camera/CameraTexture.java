@@ -148,8 +148,8 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
                     mResult.scaleYGL = (float) mFace.getBounds().height() / (float) FrontCamera.sensorActivePixels.height();
                     haveResult = true;
                     retRes = (retRes + 1) % 2;
-                    Utils.print(mResult.toString());
-                    Utils.print("On Thread " + Thread.currentThread().getName());
+                    //Utils.print(mResult.toString());
+                    //Utils.print("On Thread " + Thread.currentThread().getName());
                 }
                 MainActivity.output.setText("Distance: " + distance*Utils.MM_TO_INCH + ", " + distnaceh*Utils.MM_TO_INCH);
             } else {

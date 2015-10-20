@@ -16,10 +16,9 @@ import com.projects.oleg.seniorproject.Rendering.Geometry.Renderable;
 import com.projects.oleg.seniorproject.Rendering.Shader.Shader2D;
 import com.projects.oleg.seniorproject.Rendering.Shader.Shader3D;
 import com.projects.oleg.seniorproject.Utils;
-
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-
+import org.opencv.android.*;
 /**
  * Created by Oleg Tolstov on 3:18 PM, 10/12/15. SeniorProject
  */
@@ -67,6 +66,10 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         }
         setEGLContextClientVersion(2);
         setRenderer(this);
+
+        if(OpenCVLoader.initDebug()){
+            Utils.print("CV HAS BEEIN INTIALIZED");
+        };
     }
 
 
@@ -85,15 +88,19 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
 
         shader2D.compile();
         shader3D.compile();
+
         camera.getMatrix().setPosition(0, 0, -5);
         camera.createFrustrum(1, 100, -1, 1, -1, 1);
+
         cube2.getModelMatrix().setPosition(0, 0, -5);
-        cube.getModelMatrix().setPosition(0, 0, 0);
+
+        cube.getModelMatrix().setPosition(0, 0, .5f);
         cube.getModelMatrix().mulScale(1, 1, 1);
+
         cube.setTexture(cubeTxt);
         cube2.setTexture(cubeTxt);
-        box.setTexture(woodTxt);
 
+        box.setTexture(woodTxt);
         box.getModelMatrix().setScale(1, 1, 10);
         box.getModelMatrix().setPosition(0,0,-5);
         //cube2.getModelMatrix().mulScale(4,4,4);
@@ -120,7 +127,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         screenHInches = (float)height/ MainActivity.PPI_Y;
         screenWInches = (float)width/ MainActivity.PPI_X;
         Utils.print("Screen size is(in) " + screenWInches + ", " + screenHInches);
-        box.getModelMatrix().mulScale(screenWInches*1.15f,screenHInches*1.15f,1);
+        box.getModelMatrix().mulScale(screenWInches,screenHInches,1);
     }
 
 
@@ -154,7 +161,6 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
                 float camX = face.xOffsetInMM*Utils.MM_TO_INCH*.65f;
                 float camY = face.yOffsetInMM*Utils.MM_TO_INCH*.65f;
                 camera.getMatrix().setPosition(-camY, camX, -camDistance);
-                Utils.print("Camera pos: " + camX + ", " + camY + " " + camDistance );
                 float screenX = -camY;
                 float screenY = camX;
 
