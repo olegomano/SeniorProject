@@ -23,104 +23,33 @@ import org.opencv.android.*;
  * Created by Oleg Tolstov on 3:18 PM, 10/12/15. SeniorProject
  */
 public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer{
-    private float screenWInches;
-    private float screenHInches;
+    protected Camera camera = new Camera();
+    protected float screenWInches;
+    protected float screenHInches;
+    protected float screenRatio;
 
     private Shader2D shader2D = new Shader2D();
     private Shader3D shader3D = new Shader3D();
 
-    private float screenRatio = 1;
-
-    private Camera camera = new Camera();
-    private Quad videoFeed = new Quad();
-    private Quad faceTracker = new Quad();
-    private Cube cube = new Cube();
-    private Cube cube2 = new Cube();
-    private Box box = new Box();
-
-    private CameraTexture videoTexture;
-    private FrontCamera fCamera;
-    private Texture faceBoundTxt;
-    private Texture cubeTxt;
-    private Texture woodTxt;
-
-
 
     public MGlSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        try {
-            fCamera = new FrontCamera(context);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-        setEGLContextClientVersion(2);
-        setRenderer(this);
     }
 
     public MGlSurfaceView(Context context) {
         super(context);
-        try {
-            fCamera = new FrontCamera(context);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-        setEGLContextClientVersion(2);
-        setRenderer(this);
     }
-
-
-
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        if(OpenCVLoader.initDebug()){
-            Utils.print("CV HAS BEEIN INTIALIZED");
-        }else{
-            Utils.print("Failed initializing openCV");
-        };
-
         GLES20.glClearColor(0, 0, 0, 1);
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glDisable(GLES20.GL_CULL_FACE);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        cubeTxt = Texture.loadTexture(getContext(),R.drawable.cube_texture);
-        faceBoundTxt = Texture.loadTexture(getContext(), R.drawable.face_boundbox);
-        woodTxt = Texture.loadTexture(getContext(),R.drawable.box_dark_texture);
-
         shader2D.compile();
         shader3D.compile();
-
-        camera.getMatrix().setPosition(0, 0, -5);
-        camera.createFrustrum(1, 100, -1, 1, -1, 1);
-
-        cube2.getModelMatrix().setPosition(0, 0, -5);
-
-        cube.getModelMatrix().setPosition(0, 0, .5f);
-        cube.getModelMatrix().mulScale(1, 1, 1);
-
-        cube.setTexture(cubeTxt);
-        cube2.setTexture(cubeTxt);
-
-        box.setTexture(woodTxt);
-        box.getModelMatrix().setScale(1, 1, 10);
-        box.getModelMatrix().setPosition(0,0,-5);
-        //cube2.getModelMatrix().mulScale(4,4,4);
-
-
-        videoTexture = new CameraTexture();
-        Utils.print("Created face_boundbox " + faceBoundTxt.getTexture() + " " + faceBoundTxt.getType());
-        try {
-            while(!fCamera.start(videoTexture)){
-                Utils.print("Requested Capture Session");
-            }
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-            return;
-        }
-        videoFeed.setTexture(videoTexture.getTexture());
-        videoFeed.getModelMatrix().rotate(90,0,0,1);
-        faceTracker.setTexture(faceBoundTxt);
+        camera.createFrustrum(1,100,-1,1,-1,1);
     }
 
     @Override
@@ -129,7 +58,6 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         screenHInches = (float)height/ MainActivity.PPI_Y;
         screenWInches = (float)width/ MainActivity.PPI_X;
         Utils.print("Screen size is(in) " + screenWInches + ", " + screenHInches);
-        box.getModelMatrix().mulScale(screenWInches,screenHInches,1);
     }
 
 
@@ -152,38 +80,9 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
     @Override
     public void onDrawFrame(GL10 gl) {
         getFps();
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        videoTexture.updateTexture();
-       // draw2D(videoFeed);
-        synchronized (videoTexture) {
-            CameraTexture.FaceResult face = videoTexture.getFaceResult();
-            if (face != null) {
-                faceTracker.getModelMatrix().setPosition(face.xPositionGL,face.yPositionGL,0);
-                float camDistance = face.distanceInMM*Utils.MM_TO_INCH;
-                float camX = face.xOffsetInMM*Utils.MM_TO_INCH*.65f;
-                float camY = face.yOffsetInMM*Utils.MM_TO_INCH*.65f;
-                camera.getMatrix().setPosition(-camY, camX, -camDistance);
-                float screenX = -camY;
-                float screenY = camX;
-
-                float screenL = screenX - screenWInches/2;
-                float screenR = screenX + screenWInches/2;
-
-                float screenT = screenY + screenHInches/2;
-                float screenB = screenY - screenHInches/2;
-                camera.createFrustrum(camDistance * .5f, camDistance + 25, screenR * .5f, screenL * .5f, screenT * .5f, screenB * .5f);
-                //draw2D(faceTracker);
-            }
-        }
-
-        draw3D(cube);
-        //draw3D(cube2);
-        draw3D(box);
-
-        //cube.getModelMatrix().rotate(1,.3f,.3f,0);
    }
 
-    private void draw2D(Renderable renderable){
+    protected void draw2D(Renderable renderable){
         GLES20.glUseProgram(shader2D.getProgramHandle());
         GLES20.glEnableVertexAttribArray(shader2D.getVertexHandle());
         GLES20.glEnableVertexAttribArray(shader2D.getUvHandle());
@@ -222,7 +121,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
     }
 
     private float[] mvpMat = new float[16];
-    public void draw3D(Renderable renderable){
+    protected void draw3D(Renderable renderable){
         GLES20.glUseProgram(shader3D.getProgramHandle());
 
         GLES20.glEnableVertexAttribArray(shader3D.getVertexHandle());

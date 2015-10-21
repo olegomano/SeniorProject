@@ -16,6 +16,7 @@ import android.util.SizeF;
 import android.view.Surface;
 
 import com.projects.oleg.seniorproject.Camera.CameraTexture;
+import com.projects.oleg.seniorproject.Utils;
 
 import java.util.Collections;
 
@@ -40,10 +41,10 @@ public class FrontCamera extends CameraDevice.StateCallback{
         cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         mId = getFontCamera();
         cameraManager.openCamera(mId,this,new Handler(mContext.getMainLooper()));
+        Utils.print("Requested to open Camera");
         sensorSizeMM = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
         sensorAllPixels = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
         sensorActivePixels = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-
         pixelToMM = (float)sensorSizeMM.getWidth()/ (float)sensorAllPixels.getWidth() ;
 
     }
@@ -88,6 +89,7 @@ public class FrontCamera extends CameraDevice.StateCallback{
 
     @Override
     public synchronized void onOpened(CameraDevice camera) {
+        Utils.print("opened camera");
         opened = true;
         this.camera = camera;
     }
