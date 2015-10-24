@@ -1,7 +1,7 @@
 package com.projects.oleg.seniorproject.Camera;
 
 import android.content.Context;
-import android.graphics.Camera;
+import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -10,15 +10,13 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.ImageReader;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Size;
 import android.util.SizeF;
-import android.view.Surface;
 
-import com.projects.oleg.seniorproject.Camera.CameraTexture;
 import com.projects.oleg.seniorproject.Utils;
-
-import java.util.Collections;
 
 /**
  * Created by Oleg Tolstov on 8:35 PM, 10/9/15. SeniorProject
@@ -36,11 +34,14 @@ public class FrontCamera extends CameraDevice.StateCallback{
     private CameraDevice camera;
     private boolean opened = false;
 
+    private volatile HandlerThread workerThread = new HandlerThread("MWorker");
+
     public FrontCamera(Context context) throws CameraAccessException {
+        workerThread.start();
         mContext = context;
         cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         mId = getFontCamera();
-        cameraManager.openCamera(mId,this,new Handler(mContext.getMainLooper()));
+        cameraManager.openCamera(mId,this,new Handler(workerThread.getLooper()));
         Utils.print("Requested to open Camera");
         sensorSizeMM = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
         sensorAllPixels = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
@@ -49,15 +50,15 @@ public class FrontCamera extends CameraDevice.StateCallback{
 
     }
 
-    public synchronized boolean start(CameraTexture out) throws CameraAccessException {
+    public synchronized boolean start(CameraListener out) throws CameraAccessException {
         if(!opened){
             return false;
         }
 
         StreamConfigurationMap streamMap = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-        Size[] sizes = streamMap.getOutputSizes(SurfaceTexture.class); //todo: get maximum available size instead of taking first one
-        out.configureSurface(sizes[0].getWidth(),sizes[0].getHeight());
-
+        Size[] sizes = streamMap.getOutputSizes(ImageFormat.JPEG); //todo: get maximum available size instead of taking first one
+        out.configureBufferSize(sizes[0].getWidth(), sizes[0].getHeight());
+        Utils.print("Set camera image size to: " + sizes[0].getWidth() + ", " + sizes[1].getHeight());
         CaptureRequest.Builder request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW); //this ones gives highest framerate
         for(int i = 0; i < out.getSurfaceList().size(); i++){
             request.addTarget(out.getSurfaceList().get(i));
@@ -66,7 +67,7 @@ public class FrontCamera extends CameraDevice.StateCallback{
         request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE); //my phone only supports this one
         out.setCaptureRequest(request.build());
 
-        camera.createCaptureSession(out.getSurfaceList(),out,new Handler(mContext.getMainLooper()));
+        camera.createCaptureSession(out.getSurfaceList(), out,new Handler(workerThread.getLooper()));
         return true;
     }
 
@@ -103,4 +104,6 @@ public class FrontCamera extends CameraDevice.StateCallback{
     public void onError(CameraDevice camera, int error) {
 
     }
+
+
 }

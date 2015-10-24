@@ -27,7 +27,7 @@ import java.util.LinkedList;
  * Manages the camera feed
  */
 
-public class CameraTexture extends CameraCaptureSession.StateCallback{
+public class CameraTexture extends CameraListener{
     private final float FACE_HEIGHT_MM = 145;
     private final float FACE_WIDTH_MM = 145;
 
@@ -52,7 +52,7 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
         return surfaceList;
     }
 
-    public void configureSurface(int width, int height){ //sets the dimentions of the surface
+    public void configureBufferSize(int width, int height){ //sets the dimentions of the surface
         for(int i = 0; i < sTextureList.size(); i++){
             sTextureList.get(i).setDefaultBufferSize(width,height);
         }
@@ -60,6 +60,11 @@ public class CameraTexture extends CameraCaptureSession.StateCallback{
 
     public void setCaptureRequest(CaptureRequest c){
         mRequest =c;
+    }
+
+    @Override
+    public Class getType() {
+        return SurfaceTexture.class;
     }
 
     public Texture getTexture(){

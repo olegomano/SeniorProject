@@ -104,7 +104,6 @@ public class TDView extends MGlSurfaceView {
     public void onDrawFrame(GL10 gl) {
         super.onDrawFrame(gl);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
         videoTexture.updateTexture();
         synchronized (videoTexture) {
             CameraTexture.FaceResult face = videoTexture.getFaceResult();
@@ -125,7 +124,6 @@ public class TDView extends MGlSurfaceView {
                 camera.createFrustrum(camDistance * .5f, camDistance + 25, screenR * .5f, screenL * .5f, screenT * .5f, screenB * .5f);
             }
         }
-
         draw3D(cube);
         draw3D(box);
         draw3D(cube2);
