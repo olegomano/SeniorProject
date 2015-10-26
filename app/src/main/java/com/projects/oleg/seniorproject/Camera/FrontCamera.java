@@ -56,7 +56,7 @@ public class FrontCamera extends CameraDevice.StateCallback{
         }
 
         StreamConfigurationMap streamMap = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-        Size[] sizes = streamMap.getOutputSizes(ImageFormat.JPEG); //todo: get maximum available size instead of taking first one
+        Size[] sizes = streamMap.getOutputSizes(ImageFormat.YUV_420_888); //todo: get maximum available size instead of taking first one
         out.configureBufferSize(sizes[0].getWidth(), sizes[0].getHeight());
         Utils.print("Set camera image size to: " + sizes[0].getWidth() + ", " + sizes[1].getHeight());
         CaptureRequest.Builder request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW); //this ones gives highest framerate

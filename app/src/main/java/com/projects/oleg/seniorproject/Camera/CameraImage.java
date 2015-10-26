@@ -9,6 +9,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.view.Surface;
 
 import com.projects.oleg.seniorproject.Utils;
@@ -19,7 +20,7 @@ import java.util.List;
 /**
  * Created by Oleg Tolstov on 6:12 PM, 10/23/15. SeniorProject
  */
-public class CameraImage extends CameraListener {
+public class CameraImage extends CameraListener implements ImageReader.OnImageAvailableListener {
     private CaptureRequest request;
     private ImageReader imgReader;
     private OnImageReadyListener listener;
@@ -27,6 +28,7 @@ public class CameraImage extends CameraListener {
 
     public CameraImage(OnImageReadyListener listener){
         this.listener = listener;
+        callbackThread.start();
     }
 
     @Override
@@ -38,7 +40,8 @@ public class CameraImage extends CameraListener {
 
     @Override
     public void configureBufferSize(int w, int h) {
-        imgReader = ImageReader.newInstance(w,h,ImageFormat.JPEG,5);
+        imgReader = ImageReader.newInstance(w,h,ImageFormat.YUV_420_888,30);
+        imgReader.setOnImageAvailableListener(this, new Handler(callbackThread.getLooper()));
         if(listener!=null){
             listener.configBuffers(w,h);
         }
@@ -56,12 +59,14 @@ public class CameraImage extends CameraListener {
 
     @Override
     public void onConfigured(CameraCaptureSession session) {
-        callbackThread.start();
+        HandlerThread nThread = new HandlerThread("ThreadCallback");
+        nThread.start();
         try {
             Utils.print("Session Created, sending request");
-            session.setRepeatingRequest(request,new CaptureCallback(),new Handler(callbackThread.getLooper()));
+            session.setRepeatingRequest(request,new CaptureCallback(),new Handler(nThread.getLooper()));
         } catch (CameraAccessException e) {
             e.printStackTrace();
+            nThread.interrupt();
         }
     }
 
@@ -70,25 +75,33 @@ public class CameraImage extends CameraListener {
 
     }
 
+    private long lastPicTime = System.nanoTime();
+    @Override
+    public void onImageAvailable(ImageReader reader) {
+        Utils.print("Time between Frames: " + (System.nanoTime() - lastPicTime)*Utils.NANO_TO_SECOND) ;
+        lastPicTime = System.nanoTime();
+
+        if(listener != null){
+            Image newImage = imgReader.acquireLatestImage();
+            if(newImage == null) return;
+            Image.Plane[] imgPlanes = newImage.getPlanes();
+            long time = System.nanoTime();
+            byte[] imgData = new byte[imgPlanes[0].getBuffer().capacity()];
+            Utils.print("Img size " + imgData.length);
+            imgPlanes[0].getBuffer().get(imgData,0,imgData.length);
+            time = System.nanoTime() - time;
+            Utils.print("Buffer to byteArray time: " + time*Utils.NANO_TO_SECOND);
+            listener.onImageReady(imgData);
+        }
+
+    }
+
 
     private class CaptureCallback extends CameraCaptureSession.CaptureCallback{
+
         public  void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
             super.onCaptureCompleted(session, request, result);
-            if(listener != null){
-                Image newImage = imgReader.acquireLatestImage();
-                if(newImage == null) return;
 
-                Image.Plane[] imgPlanes = newImage.getPlanes();
-                long time = System.nanoTime();
-                byte[] imgData = new byte[imgPlanes[0].getBuffer().capacity()];
-                for(int i = 0; i < imgData.length;i++){
-                    imgData[i] = imgPlanes[0].getBuffer().get(i);
-                }
-                time = System.nanoTime() - time;
-
-                Utils.print("Buffer to byteArray time: " + time*Utils.NANO_TO_SECOND);
-                listener.onImageReady(imgData);
-            }
         }
     }
 

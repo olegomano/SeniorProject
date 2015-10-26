@@ -12,6 +12,7 @@ import android.hardware.camera2.params.Face;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.view.Surface;
 
@@ -40,12 +41,15 @@ public class CameraTexture extends CameraListener{
     private volatile int retRes = 1;
     private volatile boolean haveResult =false;
 
+    private volatile HandlerThread callbackThread = new HandlerThread("ImageCallbackThread");
+
     public CameraTexture(){
         texture = new Texture(createTexture(),GLES11Ext.GL_TEXTURE_EXTERNAL_OES);
         SurfaceTexture surfaceTexture = new SurfaceTexture(texture.getTexture());
         Surface surface = new Surface(surfaceTexture);
         sTextureList.add(surfaceTexture);
         surfaceList.add(surface);
+        callbackThread.start();
     }
 
     public ArrayList<Surface> getSurfaceList(){
@@ -103,7 +107,7 @@ public class CameraTexture extends CameraListener{
     public void onConfigured(CameraCaptureSession session) {
         try {
             Utils.print("Session created, sending request");
-            session.setRepeatingRequest(mRequest, new CaptureCallback(), new Handler(Looper.getMainLooper()));
+            session.setRepeatingRequest(mRequest, new CaptureCallback(), new Handler(callbackThread.getLooper()));
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -115,8 +119,12 @@ public class CameraTexture extends CameraListener{
     }
 
     private class CaptureCallback extends CameraCaptureSession.CaptureCallback{
+        private long frameTime = System.nanoTime();
         public  void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
             super.onCaptureCompleted(session, request, result);
+            long fTime = System.nanoTime();
+            Utils.print("time between camera frames: " + (fTime - frameTime)*Utils.NANO_TO_SECOND);
+            frameTime = fTime;
             if (result.get(TotalCaptureResult.STATISTICS_FACES).length != 0) {
                 float focus = request.get(CaptureRequest.LENS_FOCAL_LENGTH);
                 Face mFace = result.get(TotalCaptureResult.STATISTICS_FACES)[0];
@@ -129,14 +137,14 @@ public class CameraTexture extends CameraListener{
 
                 float w1 = FrontCamera.sensorSizeMM.getWidth() - mFace.getBounds().right * FrontCamera.pixelToMM;
                 float w2 = (((w1 + faceOnSensorWmm) * FACE_HEIGHT_MM) / faceOnSensorWmm) - FACE_HEIGHT_MM;
-                float distance = ((focus * w2) / w1) - focus;
+                final float distance = ((focus * w2) / w1) - focus;
 
                 float h1 = FrontCamera.sensorSizeMM.getHeight() - mFace.getBounds().bottom * FrontCamera.pixelToMM;
                 float h2 = (((h1 + faceOnSensorHmm) * FACE_WIDTH_MM) / faceOnSensorHmm) - FACE_WIDTH_MM;
-                float distnaceh = ((focus * h2) / h1) - focus;
+                final float distnaceh = ((focus * h2) / h1) - focus;
 
 
-                Utils.print("H1,H2,distance: " + w1 + ", " + w2 + ", " + distance );
+                //Utils.print("H1,H2,distance: " + w1 + ", " + w2 + ", " + distance );
 
                 float xOffset = ((mFace.getBounds().centerX() * FrontCamera.pixelToMM - (sensorWmm / 2.0f)) * (focus + distance)) / focus;
                 float yOffset = ((mFace.getBounds().centerY() * FrontCamera.pixelToMM - (sensorHmm / 2.0f)) * (focus + distance)) / focus;
@@ -156,7 +164,13 @@ public class CameraTexture extends CameraListener{
                     //Utils.print(mResult.toString());
                     //Utils.print("On Thread " + Thread.currentThread().getName());
                 }
-                MainActivity.output.setText("Distance: " + distance*Utils.MM_TO_INCH + ", " + distnaceh*Utils.MM_TO_INCH);
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        MainActivity.output.setText("Distance: " + distance * Utils.MM_TO_INCH + ", " + distnaceh * Utils.MM_TO_INCH);
+                    }
+                });
+
             } else {
                 synchronized (this) {
                     haveResult = false;

@@ -97,7 +97,7 @@ public class TDView extends MGlSurfaceView {
     private void positionBoxes(){
         box.getModelMatrix().setScale(1.5f,1.1f,12.5f);
         cube.getModelMatrix().setPosition(0, 0, 1);
-        cube2.getModelMatrix().setPosition(.5f,.5f,-2);
+        cube2.getModelMatrix().setPosition(0,0,-2);
     }
 
     @Override

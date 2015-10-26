@@ -49,11 +49,9 @@ public class CVTestView extends View implements FaceRecognitionListener{
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
-        cvThread = new OpenCVThread();
+        cvThread = new OpenCVThread(getContext());
         cvThread.setRecognitionListener(this);
         reader = new CameraImage(cvThread);
-
-        cvThread.start();
         try {
             while(!camera.start(reader)){}
         } catch (CameraAccessException e) {

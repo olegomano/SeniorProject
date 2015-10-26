@@ -1,25 +1,31 @@
 
 package com.projects.oleg.seniorproject.openCV;
 
+import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 
 import com.projects.oleg.seniorproject.Camera.CameraImage;
-import com.projects.oleg.seniorproject.Camera.FrontCamera;
+import com.projects.oleg.seniorproject.R;
+import com.projects.oleg.seniorproject.Utils;
 
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfRect;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Created by Oleg Tolstov on 5:06 PM, 10/20/15. SeniorProject
  */
 public class OpenCVThread extends Thread implements CameraImage.OnImageReadyListener{
-    private final String CASCADE_PATH = "haarcascades/haarcascade_";
+    private final String CASCADE_PATH = "raw/haarcascades/haarcascade_";
     private volatile Object imageBufferLock = new Object();
     private volatile boolean run = true;
     private volatile int bmpW;
@@ -27,21 +33,23 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
     private volatile boolean loaded = false;
     private volatile byte[] imgData;
     private volatile boolean newImage = false;
+    private volatile Bitmap videoFrameBMP;
+    private volatile boolean buffersCreated = false;
 
-    private Mat cvMat;
+    private volatile Mat cvYuvMat;
+    private volatile Mat cvRGBAMat;
     private CascadeClassifier eyeClassifier;
     private CascadeClassifier mouthClassifier;
     private CascadeClassifier noseClassifier;
 
-    private File eyeCascade   = new File(CASCADE_PATH+"eye.xml");
-    private File mouthCascade = new File(CASCADE_PATH+"mouth.xml");
-    private File noseCascade  = new File(CASCADE_PATH+"nose.xml");
-
     private volatile FaceRecognitionListener listener;
+    private volatile Context mContext;
 
-
-    public OpenCVThread(){
+    public OpenCVThread(Context context){
         super();
+        mContext = context;
+        start();
+
     }
 
     public void setRecognitionListener(FaceRecognitionListener l){
@@ -53,6 +61,11 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         synchronized (imageBufferLock) {
             bmpH = h;
             bmpW = w;
+            cvYuvMat =  new Mat((int) (h + (float)h/2.0f),w, CvType.CV_8UC1);
+            cvRGBAMat =  new Mat(h,w,CvType.CV_8UC4);
+            videoFrameBMP = Bitmap.createBitmap(w,h, Bitmap.Config.ARGB_8888);
+            Utils.print("CV thread configed mat: " + cvYuvMat.width() + ", " + cvYuvMat.height() + ", " + cvRGBAMat.width() + ", " + cvRGBAMat.height());
+            buffersCreated = true;
         }
     }
 
@@ -81,35 +94,22 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         time = System.nanoTime() - time;
         newImage = true;
         com.projects.oleg.seniorproject.Utils.print("array to array copy time: " + time * com.projects.oleg.seniorproject.Utils.NANO_TO_SECOND);
-
     }
 
     private void onTick(){
-      //  com.projects.oleg.seniorproject.Utils.print("CV THREAD TICK");
-        if(!newImage){
+        if(!newImage || !buffersCreated){
             return;
         }
-
-        Bitmap bmp;
         synchronized (imageBufferLock){
-            if(imgData==null) return;
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            if(imgData==null ) return;
             long time = System.nanoTime();
-            bmp = BitmapFactory.decodeByteArray(imgData,0,imgData.length,options);
+            cvYuvMat.put(0, 0, imgData);
+            Imgproc.cvtColor(cvYuvMat, cvRGBAMat, Imgproc.COLOR_YUV420sp2RGB, 4);
             time = System.nanoTime() - time;
-            com.projects.oleg.seniorproject.Utils.print("array to bmp time: " + time* com.projects.oleg.seniorproject.Utils.NANO_TO_SECOND);
-            if(bmp==null){
-                //com.projects.oleg.seniorproject.Utils.print("Could not read bitmap");
-                return;
-            }
-            time = System.nanoTime();
-            Utils.bitmapToMat(bmp, cvMat);
-            time = System.nanoTime() - time;
-            com.projects.oleg.seniorproject.Utils.print("Bitmap to mat time: " + time* com.projects.oleg.seniorproject.Utils.NANO_TO_SECOND);
-
+            org.opencv.android.Utils.matToBitmap(cvRGBAMat,videoFrameBMP);
+            com.projects.oleg.seniorproject.Utils.print("yuv to mat time: " + time * com.projects.oleg.seniorproject.Utils.NANO_TO_SECOND);
         }
-        listener.onRecognized(null,Bitmap.createBitmap(bmp));
+        listener.onRecognized(null, videoFrameBMP);
         newImage = false;
     }
 
@@ -121,15 +121,51 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
             com.projects.oleg.seniorproject.Utils.print("ERROR LOADING CV");
             interrupt();
         }
-        cvMat = new Mat();
+
         noseClassifier  = new CascadeClassifier();
         mouthClassifier = new CascadeClassifier();
         eyeClassifier   = new CascadeClassifier();
+        File noseCascade = loadXMLFile("nose",R.raw.haarcascade_nose);
+        File eyeCascade = loadXMLFile("eye",R.raw.haarcascade_eye);
+        File mouthCascade = loadXMLFile("mouth",R.raw.haarcascade_mouth);
+
         loadClassifier(noseClassifier,noseCascade);
         loadClassifier(mouthClassifier, mouthCascade);
-        loadClassifier(eyeClassifier,eyeCascade);
-
+        loadClassifier(eyeClassifier, eyeCascade);
         com.projects.oleg.seniorproject.Utils.print("Created CV and loaded classifiers");
+    }
+
+    private File loadXMLFile(String fileName,int resID){
+        String mFilePath = CASCADE_PATH+fileName+".xml";
+        File mFile = new File(mContext.getFilesDir(),fileName + ".xml");
+        if(mFile.exists()){
+            mFile.delete();
+        }
+        try {
+            if(mFile.createNewFile()){
+                Utils.print("Succesfully created new file");
+            }else{
+                Utils.print("Failed creating file");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        InputStream inputStream = mContext.getResources().openRawResource(resID);
+        try {
+            OutputStream fileWrite = new FileOutputStream(mFile);
+            byte[] buffer = new byte[1024];
+            int read = 0;
+            read = inputStream.read(buffer);
+            while(read  != -1){
+                fileWrite.write(buffer,0,read);
+                read = inputStream.read(buffer);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return mFile;
     }
 
     private void loadClassifier(CascadeClassifier cc, File xml){
@@ -145,7 +181,7 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
     }
 
     private void onThreadFinished(){
-        cvMat.release();
+        cvYuvMat.release();
     }
 
 
