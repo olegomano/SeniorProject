@@ -3,9 +3,9 @@ package com.projects.oleg.seniorproject;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.hardware.camera2.CameraAccessException;
-import android.media.ImageReader;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -61,19 +61,34 @@ public class CVTestView extends View implements FaceRecognitionListener{
     }
     private volatile Bitmap bmp;
     private Paint mPaint = new Paint();
+    private long frameTime;
+    private int fps = 0;
+    private int frameCount = 0;
     @Override
     public synchronized void onDraw(Canvas canvas){
         super.onDraw(canvas);
+        frameCount++;
         if(bmp != null){
             canvas.drawBitmap(bmp,0,0,mPaint);
-            canvas.drawText("HAVE VIDEO BITMAP",0,0,mPaint);
         }
-        canvas.drawText("NO VIDEO BITMAP",0,0,mPaint);
+        if(System.nanoTime() - frameTime > 1000000000){
+            mPaint.setTextSize(45);
+            mPaint.setColor(Color.RED);
+            fps = frameCount;
+            frameCount = 0;
+            frameTime = System.nanoTime();
+        }
+        if(detectedFace!=null){
+            canvas.drawRect(detectedFace.getLeftTop()[0],detectedFace.getLeftTop()[1],detectedFace.getRightBottom()[0],detectedFace.getRightBottom()[1],mPaint);
+        }
+        canvas.drawText("FPS: " + fps,0,250,mPaint);
+        detectedFace = null;
     }
-
+    private Face detectedFace = null;
     @Override
     public synchronized void onRecognized(Face f, Bitmap frame) {
         bmp = frame;
+        detectedFace = f;
         postInvalidate();
     }
 }

@@ -5,6 +5,7 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.Face;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Handler;
@@ -25,6 +26,11 @@ public class CameraImage extends CameraListener implements ImageReader.OnImageAv
     private ImageReader imgReader;
     private OnImageReadyListener listener;
     private HandlerThread callbackThread = new HandlerThread("ImageCaptureCallback");
+    private HandlerThread nThread = new HandlerThread("ThreadCallback");
+
+    private int imgW;
+    private int imgH;
+    private int imageBuffSize = 60;
 
     public CameraImage(OnImageReadyListener listener){
         this.listener = listener;
@@ -40,11 +46,14 @@ public class CameraImage extends CameraListener implements ImageReader.OnImageAv
 
     @Override
     public void configureBufferSize(int w, int h) {
-        imgReader = ImageReader.newInstance(w,h,ImageFormat.YUV_420_888,30);
+        imgReader = ImageReader.newInstance(w,h,ImageFormat.YUV_420_888,imageBuffSize);
         imgReader.setOnImageAvailableListener(this, new Handler(callbackThread.getLooper()));
+        imgW = w;
+        imgH = h;
         if(listener!=null){
             listener.configBuffers(w,h);
         }
+
     }
 
     @Override
@@ -59,7 +68,6 @@ public class CameraImage extends CameraListener implements ImageReader.OnImageAv
 
     @Override
     public void onConfigured(CameraCaptureSession session) {
-        HandlerThread nThread = new HandlerThread("ThreadCallback");
         nThread.start();
         try {
             Utils.print("Session Created, sending request");
@@ -74,26 +82,36 @@ public class CameraImage extends CameraListener implements ImageReader.OnImageAv
     public void onConfigureFailed(CameraCaptureSession session) {
 
     }
-
     private long lastPicTime = System.nanoTime();
+    private int fps = 0;
+    private volatile Face detectedFace;
+    private volatile Object faceLock = new Object();
     @Override
     public void onImageAvailable(ImageReader reader) {
-        Utils.print("Time between Frames: " + (System.nanoTime() - lastPicTime)*Utils.NANO_TO_SECOND) ;
-        lastPicTime = System.nanoTime();
-
+        Image newImage;
         if(listener != null){
-            Image newImage = imgReader.acquireLatestImage();
+            fps++;
+            if(System.nanoTime() - lastPicTime > 1000000000){
+                Utils.print("Camera fps: " + fps);
+                fps =0;
+                lastPicTime=System.nanoTime();
+            }
+            newImage = imgReader.acquireLatestImage();
             if(newImage == null) return;
             Image.Plane[] imgPlanes = newImage.getPlanes();
             long time = System.nanoTime();
-            byte[] imgData = new byte[imgPlanes[0].getBuffer().capacity()];
-            Utils.print("Img size " + imgData.length);
-            imgPlanes[0].getBuffer().get(imgData,0,imgData.length);
-            time = System.nanoTime() - time;
-            Utils.print("Buffer to byteArray time: " + time*Utils.NANO_TO_SECOND);
-            listener.onImageReady(imgData);
-        }
+            byte[] y = new byte[imgPlanes[0].getBuffer().capacity()];
+            byte[] u = new byte[imgPlanes[1].getBuffer().capacity()];
+            byte[] v = new byte[imgPlanes[2].getBuffer().capacity()];
+            imgPlanes[0].getBuffer().get(y,0,y.length);
+            imgPlanes[1].getBuffer().get(u,0,u.length);
+            imgPlanes[2].getBuffer().get(v, 0, v.length);
+            newImage.close();
 
+            synchronized (faceLock) {
+                listener.onImageReady(y, u, v, detectedFace);
+            }
+        }
     }
 
 
@@ -101,12 +119,17 @@ public class CameraImage extends CameraListener implements ImageReader.OnImageAv
 
         public  void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
             super.onCaptureCompleted(session, request, result);
-
+            synchronized (faceLock){
+                Face[] face = result.get(TotalCaptureResult.STATISTICS_FACES);
+                if(face != null && face.length != 0){
+                    detectedFace = face[0];
+                }
+            }
         }
     }
 
     public interface OnImageReadyListener{
-        public void onImageReady(byte[] data);
+        public void onImageReady(byte[] y, byte[] u, byte[] v, Face face);
         public void configBuffers(int w, int h);
     }
 }

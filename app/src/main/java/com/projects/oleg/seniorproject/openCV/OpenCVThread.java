@@ -11,6 +11,7 @@ import com.projects.oleg.seniorproject.Utils;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfRect;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
@@ -41,6 +42,7 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
     private CascadeClassifier eyeClassifier;
     private CascadeClassifier mouthClassifier;
     private CascadeClassifier noseClassifier;
+    private CascadeClassifier faceClassifier;
 
     private volatile FaceRecognitionListener listener;
     private volatile Context mContext;
@@ -62,7 +64,7 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
             bmpH = h;
             bmpW = w;
             cvYuvMat =  new Mat((int) (h + (float)h/2.0f),w, CvType.CV_8UC1);
-            cvRGBAMat =  new Mat(h,w,CvType.CV_8UC4);
+            cvRGBAMat = new Mat(w,h,CvType.CV_8UC4);
             videoFrameBMP = Bitmap.createBitmap(w,h, Bitmap.Config.ARGB_8888);
             Utils.print("CV thread configed mat: " + cvYuvMat.width() + ", " + cvYuvMat.height() + ", " + cvRGBAMat.width() + ", " + cvRGBAMat.height());
             buffersCreated = true;
@@ -83,33 +85,66 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         onThreadFinished();
     }
 
-    public void onImageReady(byte[] imageData){
-        com.projects.oleg.seniorproject.Utils.print("Image is ready");
-        long time = System.nanoTime();
+    public void onImageReady(byte[] y,byte[] u, byte[] v, android.hardware.camera2.params.Face face){
         synchronized (imageBufferLock){
             if(!loaded) return;
-            imgData = new byte[imageData.length];
-            System.arraycopy(imageData, 0, imgData, 0, imageData.length);
+            imgData = new byte[y.length];
+            System.arraycopy(y, 0, imgData, 0, imgData.length);
         }
-        time = System.nanoTime() - time;
         newImage = true;
-        com.projects.oleg.seniorproject.Utils.print("array to array copy time: " + time * com.projects.oleg.seniorproject.Utils.NANO_TO_SECOND);
     }
 
+    private int fps= 0;
+    private long fpsTimer;
+    private long recogTime = 0;
+    private long bmpConvertTime = 0;
     private void onTick(){
         if(!newImage || !buffersCreated){
             return;
         }
+        if(System.nanoTime() - fpsTimer > 1000000000){
+            Utils.print("Image recog fps: " + fps);
+            if(fps!=0) {
+                Utils.print("Image recog avg time: " + (recogTime / fps) * Utils.NANO_TO_SECOND);
+                Utils.print("Bmp convert avg time: " + (bmpConvertTime / fps) * Utils.NANO_TO_SECOND);
+            }
+            recogTime =0;
+            bmpConvertTime=0;
+            fps=0;
+            fpsTimer = System.nanoTime();
+        }
+
         synchronized (imageBufferLock){
             if(imgData==null ) return;
             long time = System.nanoTime();
             cvYuvMat.put(0, 0, imgData);
-            Imgproc.cvtColor(cvYuvMat, cvRGBAMat, Imgproc.COLOR_YUV420sp2RGB, 4);
             time = System.nanoTime() - time;
-            org.opencv.android.Utils.matToBitmap(cvRGBAMat,videoFrameBMP);
-            com.projects.oleg.seniorproject.Utils.print("yuv to mat time: " + time * com.projects.oleg.seniorproject.Utils.NANO_TO_SECOND);
+            bmpConvertTime+=time;
         }
-        listener.onRecognized(null, videoFrameBMP);
+
+        Imgproc.cvtColor(cvYuvMat, cvRGBAMat, Imgproc.COLOR_YUV420sp2RGB, 4);
+        org.opencv.android.Utils.matToBitmap(cvRGBAMat, videoFrameBMP);
+
+        Mat grayMat = new Mat();
+        Imgproc.cvtColor(cvYuvMat,grayMat,Imgproc.COLOR_YUV420p2GRAY);
+        long time = System.nanoTime();
+        MatOfRect face = new MatOfRect();
+        faceClassifier.detectMultiScale(grayMat, face);
+        org.opencv.core.Rect[] faces = face.toArray();
+        Utils.print("There were: " + faces.length + " faces detected in the picture");
+
+        Face mFace = null;
+        if(faces.length!=0){
+            mFace = new Face();
+            mFace.leftTop[0] = (float) faces[0].tl().x;
+            mFace.leftTop[1] = (float) faces[0].tl().y;
+            mFace.rightBottom[0] = (float) faces[0].br().x;
+            mFace.rightBottom[1] = (float) faces[0].br().y;
+        }
+
+        recogTime+=(System.nanoTime() - time);
+        fps++;
+        listener.onRecognized(mFace, videoFrameBMP);
         newImage = false;
     }
 
@@ -125,18 +160,20 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         noseClassifier  = new CascadeClassifier();
         mouthClassifier = new CascadeClassifier();
         eyeClassifier   = new CascadeClassifier();
+        faceClassifier = new CascadeClassifier();
         File noseCascade = loadXMLFile("nose",R.raw.haarcascade_nose);
         File eyeCascade = loadXMLFile("eye",R.raw.haarcascade_eye);
         File mouthCascade = loadXMLFile("mouth",R.raw.haarcascade_mouth);
+        File faceCascade = loadXMLFile("frontalface_default",R.raw.haarcascade_frontalface_default);
 
         loadClassifier(noseClassifier,noseCascade);
         loadClassifier(mouthClassifier, mouthCascade);
         loadClassifier(eyeClassifier, eyeCascade);
+        loadClassifier(faceClassifier,faceCascade);
         com.projects.oleg.seniorproject.Utils.print("Created CV and loaded classifiers");
     }
 
     private File loadXMLFile(String fileName,int resID){
-        String mFilePath = CASCADE_PATH+fileName+".xml";
         File mFile = new File(mContext.getFilesDir(),fileName + ".xml");
         if(mFile.exists()){
             mFile.delete();

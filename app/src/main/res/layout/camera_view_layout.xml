@@ -9,7 +9,7 @@
         android:layout_width="fill_parent"
         android:layout_height="45dp" />
 
-    <com.projects.oleg.seniorproject.CVTestView
+    <com.projects.oleg.seniorproject.TDView
         android:id="@+id/camera_view"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />

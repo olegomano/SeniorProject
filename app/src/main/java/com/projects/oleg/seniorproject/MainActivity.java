@@ -32,6 +32,6 @@ public class MainActivity extends AppCompatActivity {
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         PPI_X = metrics.xdpi;
         PPI_Y = metrics.ydpi;
-
     }
+
 }

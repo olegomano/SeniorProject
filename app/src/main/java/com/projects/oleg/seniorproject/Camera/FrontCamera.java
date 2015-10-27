@@ -54,16 +54,15 @@ public class FrontCamera extends CameraDevice.StateCallback{
         if(!opened){
             return false;
         }
-
         StreamConfigurationMap streamMap = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         Size[] sizes = streamMap.getOutputSizes(ImageFormat.YUV_420_888); //todo: get maximum available size instead of taking first one
-        out.configureBufferSize(sizes[0].getWidth(), sizes[0].getHeight());
-        Utils.print("Set camera image size to: " + sizes[0].getWidth() + ", " + sizes[1].getHeight());
+        out.configureBufferSize(sizes[((int) (sizes.length -1))].getWidth(), sizes[((int) (sizes.length -1))].getHeight());
+        Utils.print("Set camera image size to: " + sizes[((int) (sizes.length - 1))].getWidth() + ", " + sizes[((int) (sizes.length - 1))].getHeight());
         CaptureRequest.Builder request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW); //this ones gives highest framerate
+        request.set(CaptureRequest.TONEMAP_MODE,CaptureRequest.TONEMAP_MODE_HIGH_QUALITY);
         for(int i = 0; i < out.getSurfaceList().size(); i++){
             request.addTarget(out.getSurfaceList().get(i));
         }
-
         request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE); //my phone only supports this one
         out.setCaptureRequest(request.build());
 
