@@ -69,7 +69,7 @@ public class CVTestView extends View implements FaceRecognitionListener{
         super.onDraw(canvas);
         frameCount++;
         if(bmp != null){
-            canvas.drawBitmap(bmp,0,0,mPaint);
+            canvas.drawBitmap(bmp,0,0,null);
         }
         if(System.nanoTime() - frameTime > 1000000000){
             mPaint.setTextSize(45);

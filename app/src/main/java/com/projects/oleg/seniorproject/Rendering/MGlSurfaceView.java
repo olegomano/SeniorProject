@@ -81,7 +81,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
     public void onDrawFrame(GL10 gl) {
         getFps();
    }
-    
+
     protected void draw2D(Renderable renderable){
         GLES20.glUseProgram(shader2D.getProgramHandle());
         GLES20.glEnableVertexAttribArray(shader2D.getVertexHandle());

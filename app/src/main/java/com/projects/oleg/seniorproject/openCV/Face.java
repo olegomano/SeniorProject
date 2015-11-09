@@ -11,6 +11,7 @@ public class Face {
     float[] mouth = {0,0};
     float[] leftEar = {0,0};
     float[] rightEar = {0,0};
+    float[] position = {0,0,0};
 
 
     public float[] getLeftEye(){
@@ -40,4 +41,6 @@ public class Face {
     public float[] getLeftTop(){
         return leftTop;
     }
+
+    public float[] getPosition(){return position;}
 }

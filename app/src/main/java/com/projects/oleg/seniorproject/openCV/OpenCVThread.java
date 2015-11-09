@@ -3,6 +3,7 @@ package com.projects.oleg.seniorproject.openCV;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.ImageFormat;
 
 import com.projects.oleg.seniorproject.Camera.CameraImage;
 import com.projects.oleg.seniorproject.R;
@@ -11,7 +12,9 @@ import com.projects.oleg.seniorproject.Utils;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfRect;
+import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
@@ -26,7 +29,6 @@ import java.io.OutputStream;
  * Created by Oleg Tolstov on 5:06 PM, 10/20/15. SeniorProject
  */
 public class OpenCVThread extends Thread implements CameraImage.OnImageReadyListener{
-    private final String CASCADE_PATH = "raw/haarcascades/haarcascade_";
     private volatile Object imageBufferLock = new Object();
     private volatile boolean run = true;
     private volatile int bmpW;
@@ -35,14 +37,16 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
     private volatile byte[] imgData;
     private volatile boolean newImage = false;
     private volatile Bitmap videoFrameBMP;
+    private volatile Bitmap videoFrameBMPbuffer;
     private volatile boolean buffersCreated = false;
 
-    private volatile Mat cvYuvMat;
     private volatile Mat cvRGBAMat;
     private CascadeClassifier eyeClassifier;
     private CascadeClassifier mouthClassifier;
     private CascadeClassifier noseClassifier;
     private CascadeClassifier faceClassifier;
+
+    private Rect prevFaceBounds;
 
     private volatile FaceRecognitionListener listener;
     private volatile Context mContext;
@@ -59,14 +63,15 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
     }
 
 
-    public void configBuffers(int w, int h){
+    public void onImageSizeChanged(int w, int h){
         synchronized (imageBufferLock) {
             bmpH = h;
             bmpW = w;
-            cvYuvMat =  new Mat((int) (h + (float)h/2.0f),w, CvType.CV_8UC1);
             cvRGBAMat = new Mat(w,h,CvType.CV_8UC4);
             videoFrameBMP = Bitmap.createBitmap(w,h, Bitmap.Config.ARGB_8888);
-            Utils.print("CV thread configed mat: " + cvYuvMat.width() + ", " + cvYuvMat.height() + ", " + cvRGBAMat.width() + ", " + cvRGBAMat.height());
+            videoFrameBMPbuffer = Bitmap.createBitmap(w,h, Bitmap.Config.ARGB_8888);
+            imgData = new byte[w*h*4];
+            Utils.print("CV thread configed mat: " + cvRGBAMat.width() + ", " + cvRGBAMat.height());
             buffersCreated = true;
         }
     }
@@ -85,11 +90,10 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         onThreadFinished();
     }
 
-    public void onImageReady(byte[] y,byte[] u, byte[] v, android.hardware.camera2.params.Face face){
+    public void onImageReady(byte[] y,byte[] u, byte[] v){
         synchronized (imageBufferLock){
             if(!loaded) return;
-            imgData = new byte[y.length];
-            System.arraycopy(y, 0, imgData, 0, imgData.length);
+            Utils.yuvTbmp(bmpW,bmpH,y,u,v,videoFrameBMPbuffer);
         }
         newImage = true;
     }
@@ -117,35 +121,102 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         synchronized (imageBufferLock){
             if(imgData==null ) return;
             long time = System.nanoTime();
-            cvYuvMat.put(0, 0, imgData);
+            videoFrameBMP = Bitmap.createBitmap(videoFrameBMPbuffer);
             time = System.nanoTime() - time;
             bmpConvertTime+=time;
         }
 
-        Imgproc.cvtColor(cvYuvMat, cvRGBAMat, Imgproc.COLOR_YUV420sp2RGB, 4);
-        org.opencv.android.Utils.matToBitmap(cvRGBAMat, videoFrameBMP);
-
-        Mat grayMat = new Mat();
-        Imgproc.cvtColor(cvYuvMat,grayMat,Imgproc.COLOR_YUV420p2GRAY);
         long time = System.nanoTime();
-        MatOfRect face = new MatOfRect();
-        faceClassifier.detectMultiScale(grayMat, face);
-        org.opencv.core.Rect[] faces = face.toArray();
-        Utils.print("There were: " + faces.length + " faces detected in the picture");
+        org.opencv.android.Utils.bitmapToMat(videoFrameBMP, cvRGBAMat);
+        Mat gray = new Mat();
+        org.opencv.imgproc.Imgproc.cvtColor(cvRGBAMat, gray, Imgproc.COLOR_RGBA2GRAY);
+        Mat equalized = new Mat();
+        org.opencv.imgproc.Imgproc.equalizeHist(gray, equalized);
 
+        Bitmap toDraw = Bitmap.createBitmap(bmpW,bmpH, Bitmap.Config.ARGB_8888);
+        org.opencv.android.Utils.matToBitmap(equalized, toDraw);
+
+        Rect detectedFace = detectFace(equalized);
         Face mFace = null;
-        if(faces.length!=0){
+
+        if(detectedFace != null){
             mFace = new Face();
-            mFace.leftTop[0] = (float) faces[0].tl().x;
-            mFace.leftTop[1] = (float) faces[0].tl().y;
-            mFace.rightBottom[0] = (float) faces[0].br().x;
-            mFace.rightBottom[1] = (float) faces[0].br().y;
+            mFace.leftTop[0] = (float) detectedFace.tl().x;
+            mFace.leftTop[1] = (float) detectedFace.tl().y;
+            mFace.rightBottom[0] = (float) detectedFace.br().x;
+            mFace.rightBottom[1] = (float) detectedFace.br().y;
         }
 
         recogTime+=(System.nanoTime() - time);
         fps++;
         listener.onRecognized(mFace, videoFrameBMP);
         newImage = false;
+    }
+
+    private Rect detectFace(Mat mat){
+        Mat detectionMat;
+        boolean fullFrameDetect = false;
+
+        if(prevFaceBounds == null){ //detecting in full picture
+            detectionMat = mat;
+            fullFrameDetect = true;
+        }else{ //detecting in previous bounds
+            detectionMat = mat.submat(prevFaceBounds);
+        }
+
+        MatOfRect detectionResultMat = new MatOfRect();
+        faceClassifier.detectMultiScale(detectionMat,detectionResultMat);
+        Rect[] results = detectionResultMat.toArray();
+
+        if(results.length == 0){//did not find result
+            if(fullFrameDetect){//did not find result in whole picture
+                prevFaceBounds = null;
+                return null;
+            }else{ //did not find result in previous bounds looking in whole picture
+                faceClassifier.detectMultiScale(mat,detectionResultMat);
+                results = detectionResultMat.toArray();
+                if(results.length == 0){ //did not find result in whole picture
+                    return null;
+                }
+                Utils.print("Failed finding face using previous bounds");
+                prevFaceBounds = createNewFaceBounds(results[0],1.2f,1.2f,bmpW,bmpH);
+                return results[0];
+            }
+        }else{//found results
+            if(!fullFrameDetect){ //found results in previous frame
+                Utils.print("Found face using previous bounds");
+                results[0].x += prevFaceBounds.x;
+                results[0].y += prevFaceBounds.y;
+            }
+            prevFaceBounds = createNewFaceBounds(results[0],1.3f,1.6f,bmpW,bmpH);
+            return results[0];
+
+        }
+
+
+    }
+
+    private Rect createNewFaceBounds(Rect currFace,float wRatio,float hRatio, int w, int h){
+        int newW = (int) (currFace.width*wRatio);
+        int newH = (int)(currFace.height*hRatio);
+        int offsetX= (int) ((newW - currFace.width)/2.0f) ;
+        int offsetY = (int) ((newH - currFace.height)/2.0f) ;;
+
+        int top = (int) (currFace.y - offsetY);
+        if(top < 0) top = 0;
+
+        int left = (int) (currFace.x -offsetX);
+        if(left < 0) left = 0;
+
+        int bottom = (int) (top + newH);
+        if(bottom > h) bottom = h;
+
+        int right = (int) (left + newW);
+        if(right > w) right =  w;
+
+        Rect newBounds = new Rect(left,top,right - left, bottom - top);
+        Utils.print("Created new Bounds: " + newBounds + ", old bounds " + currFace);
+        return newBounds;
     }
 
     private void onThreadStarted(){
@@ -164,7 +235,7 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         File noseCascade = loadXMLFile("nose",R.raw.haarcascade_nose);
         File eyeCascade = loadXMLFile("eye",R.raw.haarcascade_eye);
         File mouthCascade = loadXMLFile("mouth",R.raw.haarcascade_mouth);
-        File faceCascade = loadXMLFile("frontalface_default",R.raw.haarcascade_frontalface_default);
+        File faceCascade = loadXMLFile("frontalface_default",R.raw.haarcascade_frontalface_alt);
 
         loadClassifier(noseClassifier,noseCascade);
         loadClassifier(mouthClassifier, mouthCascade);
@@ -218,7 +289,7 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
     }
 
     private void onThreadFinished(){
-        cvYuvMat.release();
+        cvRGBAMat.release();
     }
 
 

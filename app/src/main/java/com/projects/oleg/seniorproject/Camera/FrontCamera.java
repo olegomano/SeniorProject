@@ -3,14 +3,12 @@ package com.projects.oleg.seniorproject.Camera;
 import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.media.ImageReader;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Size;
@@ -56,14 +54,17 @@ public class FrontCamera extends CameraDevice.StateCallback{
         }
         StreamConfigurationMap streamMap = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         Size[] sizes = streamMap.getOutputSizes(ImageFormat.YUV_420_888); //todo: get maximum available size instead of taking first one
-        out.configureBufferSize(sizes[((int) (sizes.length -1))].getWidth(), sizes[((int) (sizes.length -1))].getHeight());
+        out.configureImageSize(sizes[((int) (sizes.length - 1))].getWidth(), sizes[((int) (sizes.length - 1))].getHeight());
+
         Utils.print("Set camera image size to: " + sizes[((int) (sizes.length - 1))].getWidth() + ", " + sizes[((int) (sizes.length - 1))].getHeight());
         CaptureRequest.Builder request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW); //this ones gives highest framerate
         request.set(CaptureRequest.TONEMAP_MODE,CaptureRequest.TONEMAP_MODE_HIGH_QUALITY);
+
         for(int i = 0; i < out.getSurfaceList().size(); i++){
             request.addTarget(out.getSurfaceList().get(i));
         }
-        request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE); //my phone only supports this one
+
+       // request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE); //my phone only supports this one
         out.setCaptureRequest(request.build());
 
         camera.createCaptureSession(out.getSurfaceList(), out,new Handler(workerThread.getLooper()));

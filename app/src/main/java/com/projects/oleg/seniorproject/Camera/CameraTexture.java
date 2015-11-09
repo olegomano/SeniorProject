@@ -56,7 +56,7 @@ public class CameraTexture extends CameraListener{
         return surfaceList;
     }
 
-    public void configureBufferSize(int width, int height){ //sets the dimentions of the surface
+    public void configureImageSize(int width, int height){ //sets the dimentions of the surface
         for(int i = 0; i < sTextureList.size(); i++){
             sTextureList.get(i).setDefaultBufferSize(width,height);
         }

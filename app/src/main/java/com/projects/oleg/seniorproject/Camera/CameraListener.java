@@ -12,7 +12,7 @@ import java.util.List;
  */
 public abstract class CameraListener extends CameraCaptureSession.StateCallback {
     public abstract List<Surface> getSurfaceList();
-    public abstract void configureBufferSize(int w, int h);
+    public abstract void configureImageSize(int w, int h);
     public abstract void setCaptureRequest(CaptureRequest request);
     public abstract Class getType();
 }

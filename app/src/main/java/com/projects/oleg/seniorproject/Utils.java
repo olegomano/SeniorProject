@@ -1,5 +1,7 @@
 package com.projects.oleg.seniorproject;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.opengl.GLES20;
 import android.util.Log;
 
@@ -7,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * Created by Oleg Tolstov on 9:36 PM, 10/10/15. SeniorProject
@@ -16,8 +19,50 @@ public class Utils {
     public static final float NANO_TO_SECOND = .000000001f;
     public static void print(String s){
         if(s!=null){
-            Log.d("Project",s);
+            Log.d("Project", s);
         }
+    }
+
+    public static boolean yuvTbmp(int w, int h,byte[] y, byte[] u,byte[] v,Bitmap bmp){
+        if(bmp.getWidth()*bmp.getHeight() != y.length){
+            print("Error converting, size mismatch");
+            return false;
+        }
+        for(int xp = 0; xp < w; xp++){
+            for(int yp = 0; yp < h; yp++){
+                int bmpBit = (yp*w + xp);
+                int my = toInt( y[bmpBit] );
+                int mu = toInt( u[bmpBit/4]);
+                int mv = toInt( v[bmpBit/4]);
+                my = clamp((int) (1.164*(my)));
+
+                int r = my;
+                int g = my;
+                int b = my;
+
+                r = ( clamp(r) << 16 )& 0x00FF0000;
+                g = ( clamp(g) << 8  )& 0x0000FF00;
+                b = clamp(b) & 0x000000FF;
+                int color = 0xFF000000|r|g|b;
+                bmp.setPixel(xp,yp, color);
+            }
+        }
+        return true;
+    }
+
+    public static int toInt(byte b){
+        return ((int) b) & 0xff;
+    }
+
+
+    public static int clamp(int val){
+        if(val <= 0){
+            return 0;
+        }
+        if(val >= 255){
+            return 255;
+        }
+        return val;
     }
 
     public static float rerange(float oMin, float oMax, float nMin, float nMax, float val){
@@ -101,7 +146,4 @@ public class Utils {
         rets += "[ " +       matrix[12] + ", " + matrix[12] + ", " + matrix[14] + ", "+matrix[15] + "] \n";
         return rets;
     }
-
-
-
 }
