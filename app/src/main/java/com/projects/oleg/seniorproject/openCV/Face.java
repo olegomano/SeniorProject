@@ -4,6 +4,8 @@ package com.projects.oleg.seniorproject.openCV;
  * Created by Oleg Tolstov on 6:59 PM, 10/23/15. SeniorProject
  */
 public class Face {
+    public static final float FACE_WIDTH_REAL_MM = 117;
+
     float[] leftTop = {0,0};
     float[] rightBottom = {0,0};
     float[] leftEye = {0,0};
@@ -43,4 +45,7 @@ public class Face {
     }
 
     public float[] getPosition(){return position;}
+
+
+
 }

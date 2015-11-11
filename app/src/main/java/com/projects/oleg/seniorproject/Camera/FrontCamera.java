@@ -25,6 +25,7 @@ public class FrontCamera extends CameraDevice.StateCallback{
     public static Size sensorAllPixels; //all the pixels in the sensor
 
     public static float pixelToMM; //totalPixelsInSensor / sizeOfSensor
+    public static float focalLength; //focus of camera
 
     private Context mContext;
     private CameraManager cameraManager;
@@ -45,6 +46,7 @@ public class FrontCamera extends CameraDevice.StateCallback{
         sensorAllPixels = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
         sensorActivePixels = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
         pixelToMM = (float)sensorSizeMM.getWidth()/ (float)sensorAllPixels.getWidth() ;
+        focalLength = cameraManager.getCameraCharacteristics(mId).get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)[0];
 
     }
 
@@ -59,7 +61,8 @@ public class FrontCamera extends CameraDevice.StateCallback{
         Utils.print("Set camera image size to: " + sizes[((int) (sizes.length - 1))].getWidth() + ", " + sizes[((int) (sizes.length - 1))].getHeight());
         CaptureRequest.Builder request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW); //this ones gives highest framerate
         request.set(CaptureRequest.TONEMAP_MODE,CaptureRequest.TONEMAP_MODE_HIGH_QUALITY);
-
+        request.set(CaptureRequest.LENS_FOCAL_LENGTH,focalLength);
+        Utils.print("Set focal length: " + focalLength);
         for(int i = 0; i < out.getSurfaceList().size(); i++){
             request.addTarget(out.getSurfaceList().get(i));
         }

@@ -80,6 +80,7 @@ public class CVTestView extends View implements FaceRecognitionListener{
         }
         if(detectedFace!=null){
             canvas.drawRect(detectedFace.getLeftTop()[0],detectedFace.getLeftTop()[1],detectedFace.getRightBottom()[0],detectedFace.getRightBottom()[1],mPaint);
+            canvas.drawText("Distance to face: " + detectedFace.getPosition()[0] + ", " + detectedFace.getPosition()[1] + ", " + detectedFace.getPosition()[2],0,450,mPaint);
         }
         canvas.drawText("FPS: " + fps,0,250,mPaint);
         detectedFace = null;
