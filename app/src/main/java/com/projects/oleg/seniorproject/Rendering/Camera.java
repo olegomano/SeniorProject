@@ -16,22 +16,11 @@ public class Camera {
     }
 
     public void createFrustrum(float near, float far, float left, float right, float bottom, float top){
-        float a = (right + left)/(right-left);
-        float b = (top + bottom)/(top-bottom);
-        float c = -(far + near)/(far - near);
-        float d = -(2*far*near)/(far - near);
-
-        float zz = (2*near)/(right - left);
-        float oo = (2*near)/(top - bottom);
-
-        float[] f = {
-                zz,0,a,0,
-                0,oo,b,0,
-                0,0,c,d,
-                0,0,-1,0
-        };
-        //System.arraycopy(f, 0, projection, 0, f.length);
         android.opengl.Matrix.frustumM(projection, 0, left, right, bottom, top, near, far);
+    }
+
+    public void createFrustrum(float angle){
+        android.opengl.Matrix.perspectiveM(projection,0,angle,1,1,100);
     }
 
     public float[] getProjectionCamera(){

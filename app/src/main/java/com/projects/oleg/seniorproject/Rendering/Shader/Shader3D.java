@@ -24,6 +24,8 @@ public class Shader3D {
                     "  gl_Position = mvpMat*scaledVert;"+
                     "  gl_Position.y*=screenRatio;"+
                     "  vUV = aUV;" +
+                  //  "  gl_Position.z = 0.0;"+
+                  //  "  gl_Position.w = 1.0;"+
                     "}\n";
 
     private static final String fragmentShader =

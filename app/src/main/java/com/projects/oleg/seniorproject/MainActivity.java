@@ -28,10 +28,14 @@ public class MainActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         setContentView(R.layout.camera_view_layout);
-        output = (TextView) findViewById(R.id.text_view);
+        //output = (TextView) findViewById(R.id.text_view);
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         PPI_X = metrics.xdpi;
         PPI_Y = metrics.ydpi;
+    }
+
+    public static void writeOutput(String output){
+
     }
 
 }

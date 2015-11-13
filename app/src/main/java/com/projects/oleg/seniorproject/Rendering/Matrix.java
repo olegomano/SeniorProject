@@ -14,7 +14,7 @@ public class Matrix {
     }
 
     public void rotate(float a, float x, float y, float z){
-        android.opengl.Matrix.rotateM(matrix,0,a,x,y,z);
+        android.opengl.Matrix.rotateM(matrix, 0, a, x, y, z);
     }
 
     public void translate(float x, float y,float z){
@@ -31,12 +31,22 @@ public class Matrix {
         android.opengl.Matrix.invertM(out,0,matrix,0);
     }
 
+    public void transpose(float[] out){
+        android.opengl.Matrix.transposeM(out,0,matrix,0);
+    }
+
     public void lookAt(float x, float y, float z){
-        
+        float[] forward = new float[4];
+        forward[0] = x - matrix[12];
+        forward[1] = y - matrix[13];
+        forward[2] = z - matrix[14];
+        Utils.normalizeVec(forward);
     }
 
     public void create(float[] right, float[] up, float[] forward){
-
+        System.arraycopy(right,0,matrix,0,4);
+        System.arraycopy(up,0,matrix,4,4);
+        System.arraycopy(forward,0,matrix,8,4);
     }
 
 

@@ -40,6 +40,8 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         super(context);
     }
 
+    public void onInit(){};
+
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         GLES20.glClearColor(0, 0, 0, 1);
@@ -49,7 +51,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         shader2D.compile();
         shader3D.compile();
-        camera.createFrustrum(1,100,-1,1,-1,1);
+        camera.createFrustrum(1, 100, -1, 1, -1, 1);
     }
 
     @Override
@@ -57,7 +59,9 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         screenRatio = 1;
         screenHInches = (float)height/ MainActivity.PPI_Y;
         screenWInches = (float)width/ MainActivity.PPI_X;
+        //screenRatio = screenWInches/screenHInches;
         Utils.print("Screen size is(in) " + screenWInches + ", " + screenHInches);
+        onInit();
     }
 
 

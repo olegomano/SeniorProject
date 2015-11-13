@@ -67,7 +67,7 @@ public class FrontCamera extends CameraDevice.StateCallback{
             request.addTarget(out.getSurfaceList().get(i));
         }
 
-       // request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE); //my phone only supports this one
+        request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE); //my phone only supports this one
         out.setCaptureRequest(request.build());
 
         camera.createCaptureSession(out.getSurfaceList(), out,new Handler(workerThread.getLooper()));

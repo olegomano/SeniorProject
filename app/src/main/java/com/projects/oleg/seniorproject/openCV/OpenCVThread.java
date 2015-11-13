@@ -48,7 +48,6 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
     private CascadeClassifier noseClassifier;
     private CascadeClassifier faceClassifier;
 
-    private Rect prevFaceBounds;
 
     private volatile FaceRecognitionListener listener;
     private volatile Context mContext;
@@ -173,45 +172,53 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
 
         out.position[0] =  faceXPos;
         out.position[1] = -faceYPos;
+
+        out.position[0]*=Utils.MM_TO_INCH;
+        out.position[1]*=Utils.MM_TO_INCH;
+        out.position[2]*=Utils.MM_TO_INCH;
     }
 
+    private Rect prevFaceBounds;
     private Rect detectFace(Mat mat){
         Mat detectionMat;
+        float nextRscaleW = 1.6f;
+        float nextRscaleH = 1.3f;
         boolean fullFrameDetect = false;
+        Size minSize = new Size(10,10);
+        Size maxSize = new Size(mat.width(),mat.height());
+        double scaleFactor = 1.02;
         if(prevFaceBounds == null){ //detecting in full picture
             detectionMat = mat;
             fullFrameDetect = true;
+            scaleFactor = 1.1f;
         }else{ //detecting in previous bounds
             detectionMat = mat.submat(prevFaceBounds);
+            minSize.width = (prevFaceBounds.width/nextRscaleW)*.7f;
+            minSize.height = (prevFaceBounds.width/nextRscaleH)*.7f;
+            maxSize.width = prevFaceBounds.width;
+            maxSize.height = prevFaceBounds.height;
         }
 
+        long time = System.nanoTime();
         MatOfRect detectionResultMat = new MatOfRect();
-        faceClassifier.detectMultiScale(detectionMat,detectionResultMat);
-        Rect[] results = detectionResultMat.toArray();
+        faceClassifier.detectMultiScale(detectionMat,detectionResultMat,scaleFactor,15,0,minSize,maxSize);
+        long detectTime = System.nanoTime() - time;
 
-        if(results.length == 0){//did not find result
-            if(fullFrameDetect){//did not find result in whole picture
-                prevFaceBounds = null;
-                return null;
-            }else{ //did not find result in previous bounds looking in whole picture
-                faceClassifier.detectMultiScale(mat,detectionResultMat);
-                results = detectionResultMat.toArray();
-                if(results.length == 0){ //did not find result in whole picture
-                    return null;
-                }
-                Utils.print("Failed finding face using previous bounds");
-                prevFaceBounds = createNewFaceBounds(results[0],1.3f,1.6f, camPictureW, camPictureH);
-                return results[0];
-            }
-        }else{//found results
+        Rect[] results = detectionResultMat.toArray();
+        Utils.print("Time to detect " + detectTime + " in mat size" + detectionMat.width()*detectionMat.height() + " Per pixel detect time = " + (detectTime/(detectionMat.width()*detectionMat.height())));
+
+        if(results.length != 0){//found results
             if(!fullFrameDetect){ //found results using previous frame
                 Utils.print("Found face using previous bounds");
                 results[0].x += prevFaceBounds.x;
                 results[0].y += prevFaceBounds.y;
             }
-            prevFaceBounds = createNewFaceBounds(results[0],1.3f,1.6f, camPictureW, camPictureH);
+            prevFaceBounds = createNewFaceBounds(results[0],nextRscaleW,nextRscaleH, camPictureW, camPictureH);
             return results[0];
 
+        }else{
+            prevFaceBounds = null;
+            return null;
         }
     }
 
@@ -254,7 +261,7 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         File noseCascade = loadXMLFile("nose",R.raw.haarcascade_nose);
         File eyeCascade = loadXMLFile("eye",R.raw.haarcascade_eye);
         File mouthCascade = loadXMLFile("mouth",R.raw.haarcascade_mouth);
-        File faceCascade = loadXMLFile("frontalface_default",R.raw.haarcascade_frontalface_alt2);
+        File faceCascade = loadXMLFile("frontalface_default",R.raw.haarcascade_frontalface_alt);
 
         loadClassifier(noseClassifier,noseCascade);
         loadClassifier(mouthClassifier, mouthCascade);

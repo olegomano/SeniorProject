@@ -61,7 +61,7 @@ public class TDView extends MGlSurfaceView {
         super.onSurfaceCreated(gl,config);
         cubeTxt = Texture.loadTexture(getContext(),R.drawable.cube_texture);
         faceBoundTxt = Texture.loadTexture(getContext(), R.drawable.face_boundbox);
-        woodTxt = Texture.loadTexture(getContext(),R.drawable.box_dark_texture);
+        woodTxt = Texture.loadTexture(getContext(),R.drawable.cube_wood_texture);
         camera.getMatrix().setPosition(0, 0, -5f);
         camera.createFrustrum(1, 100, -1, 1, -1, 1);
         cube.setTexture(cubeTxt);

@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
+import com.projects.oleg.seniorproject.Utils;
+
 /**
  * Created by Oleg Tolstov on 9:50 PM, 10/14/15. SeniorProject
  */
@@ -52,6 +54,7 @@ public class Texture {
 
             // Recycle the bitmap, since its data has been loaded into OpenGL.
             bitmap.recycle();
+            Utils.checkGlError("Created Texture: " + textureHandle[0]);
         }
 
         if (textureHandle[0] == 0)

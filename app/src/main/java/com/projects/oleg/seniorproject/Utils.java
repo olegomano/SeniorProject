@@ -50,6 +50,29 @@ public class Utils {
         return true;
     }
 
+    public static float dotProduct(float[] v1,float[] v2){
+        float product = 0;
+        for(int i = 0; i < 3;i++){
+            product+=(v1[i]*v2[i]);
+        }
+        return product;
+    }
+
+    public static void normalizeVec(float[] vec){
+        float magnitude = getMagnitude(vec);
+        for(int i = 0; i < 3; i++){
+            vec[i]/=magnitude;
+        }
+    }
+
+    public static float getMagnitude(float[] vec){
+        float sum = 0;
+        for(int i = 0; i < 3; i++){
+            sum+=( vec[i] * vec[i]);
+        }
+        return (float) Math.sqrt(sum);
+    }
+
     public static int toInt(byte b){
         return ((int) b) & 0xff;
     }
