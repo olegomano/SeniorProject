@@ -8,6 +8,7 @@ import android.util.AttributeSet;
 
 import com.projects.oleg.seniorproject.Camera.CameraImage;
 import com.projects.oleg.seniorproject.Camera.FrontCamera;
+import com.projects.oleg.seniorproject.DebugView.DebugView;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Box;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Cube;
 import com.projects.oleg.seniorproject.Rendering.MGlSurfaceView;
@@ -94,13 +95,28 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
         }
     }
 
-    private float threashHold = .03f;
+    private float threashHold = .1f;
     private float lastSigX = 0;
     private float lastSigY = 0;
     private float lastSigZ = 0;
+
+    private int newDetections = 0;
+    private long lastPost = System.nanoTime();
     @Override
     public void onRecognized(Face f, Bitmap frame) {
-        if(f==null)return;
+        newDetections++;
+        long frameTime = System.nanoTime();
+        if(frameTimels - lastPost > Utils.SECOND_TO_NANO){
+            DebugView.putRecogFPS(""+newDetections);
+            newDetections=0;
+            lastPost = frameTime;
+        }
+
+        if(f==null){
+            DebugView.putRecogStatus("FALSE");
+            return;
+        }
+        DebugView.putRecogStatus("TRUE");
         synchronized (drawLock){
             float[] headPosition = f.getPosition();
             if(Math.abs( headPosition[0] - lastSigX) < threashHold && Math.abs( headPosition[1] - lastSigY ) < threashHold && Math.abs( headPosition[2] - lastSigZ )< threashHold){
@@ -111,12 +127,12 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
             lastSigZ = headPosition[2];
             Utils.print("Face detected: " + headPosition[0] + ", " + headPosition[1] + ", " + headPosition[2]);
             //camera.getMatrix().setPosition(0, 0, headPosition[2]);
-            camera.getMatrix().setPosition( headPosition[0]*.6f,headPosition[1]*.6f,-headPosition[2]);
+            camera.getMatrix().setPosition( headPosition[0]*.65f,headPosition[1]*.65f,-headPosition[2]);
             float dCoeff    =  1.0f / headPosition[2];
-            float frustrumL =  (headPosition[0]*.6f - screenWInches/2.0f)*dCoeff;
-            float frustrumR =  (headPosition[0]*.6f + screenWInches/2.0f)*dCoeff;
-            float frustrumT =  (headPosition[1]*.6f - screenHInches/2.0f)*dCoeff;
-            float frustrumB =  (headPosition[1]*.6f + screenHInches/2.0f)*dCoeff;
+            float frustrumL =  (headPosition[0]*.65f - screenWInches/2.0f)*dCoeff;
+            float frustrumR =  (headPosition[0]*.65f + screenWInches/2.0f)*dCoeff;
+            float frustrumT =  (headPosition[1]*.65f - screenHInches/2.0f)*dCoeff;
+            float frustrumB =  (headPosition[1]*.65f + screenHInches/2.0f)*dCoeff;
             camera.createFrustrum(1,100,frustrumL,frustrumR,frustrumB,frustrumT);
         }
     }

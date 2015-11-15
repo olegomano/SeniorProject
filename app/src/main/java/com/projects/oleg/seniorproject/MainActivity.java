@@ -9,11 +9,12 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import com.projects.oleg.seniorproject.DebugView.DebugView;
 import com.projects.oleg.seniorproject.Rendering.MGlSurfaceView;
 
 public class MainActivity extends AppCompatActivity {
     private MGlSurfaceView surfaceView;
-    public static TextView output;
+    private View debugView;
     public static float PPI_X;
     public static float PPI_Y;
     @Override
@@ -28,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         setContentView(R.layout.camera_view_layout);
+        debugView = findViewById(R.id.debug_view);
+        DebugView.initDebug(debugView);
         //output = (TextView) findViewById(R.id.text_view);
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         PPI_X = metrics.xdpi;

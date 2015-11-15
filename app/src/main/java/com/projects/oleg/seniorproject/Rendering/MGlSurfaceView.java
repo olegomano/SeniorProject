@@ -7,6 +7,7 @@ import android.util.AttributeSet;
 
 import com.projects.oleg.seniorproject.Camera.CameraTexture;
 import com.projects.oleg.seniorproject.Camera.FrontCamera;
+import com.projects.oleg.seniorproject.DebugView.DebugView;
 import com.projects.oleg.seniorproject.MainActivity;
 import com.projects.oleg.seniorproject.R;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Box;
@@ -76,6 +77,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         lastFrame = frameTime;
         if(fpsTime > 1000000000){
             Utils.print("FPS: " + frame);
+            DebugView.putRenderFPS(""+frame);
             frame = 0;
             fpsTime = 0;
         }

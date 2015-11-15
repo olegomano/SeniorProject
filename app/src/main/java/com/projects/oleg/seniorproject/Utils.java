@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class Utils {
     public static final float MM_TO_INCH = 0.0393701f;
     public static final float NANO_TO_SECOND = .000000001f;
+    public static final float SECOND_TO_NANO = 1000000000;
     public static void print(String s){
         if(s!=null){
             Log.d("Project", s);

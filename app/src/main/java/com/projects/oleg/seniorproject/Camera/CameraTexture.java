@@ -167,7 +167,7 @@ public class CameraTexture extends CameraListener{
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
                     public void run() {
-                        MainActivity.output.setText("Distance: " + distance * Utils.MM_TO_INCH + ", " + distnaceh * Utils.MM_TO_INCH);
+                     //   MainActivity.output.setText("Distance: " + distance * Utils.MM_TO_INCH + ", " + distnaceh * Utils.MM_TO_INCH);
                     }
                 });
 

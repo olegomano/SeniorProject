@@ -108,10 +108,10 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
             return;
         }
         if(System.nanoTime() - fpsTimer > 1000000000){
-            Utils.print("Image recog fps: " + fps);
+            //Utils.print("Image recog fps: " + fps);
             if(fps!=0) {
-                Utils.print("Image recog avg time: " + (recogTime / fps) * Utils.NANO_TO_SECOND);
-                Utils.print("Bmp convert avg time: " + (bmpConvertTime / fps) * Utils.NANO_TO_SECOND);
+                //Utils.print("Image recog avg time: " + (recogTime / fps) * Utils.NANO_TO_SECOND);
+                //Utils.print("Bmp convert avg time: " + (bmpConvertTime / fps) * Utils.NANO_TO_SECOND);
             }
             recogTime =0;
             bmpConvertTime=0;
@@ -158,7 +158,7 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
     private void calculateFacePose(Rect face,Face out){
         float sensorWPerc = (float)face.width / (float)camPictureW;
         float sizeOnSensorMM = sensorWPerc* FrontCamera.sensorSizeMM.getWidth()/2.0f;
-        Utils.print("Face width pix: " + face.width + ", on sensor mm: " + sizeOnSensorMM);
+        //Utils.print("Face width pix: " + face.width + ", on sensor mm: " + sizeOnSensorMM);
         float distance = ( (Face.FACE_WIDTH_REAL_MM*FrontCamera.focalLength)/sizeOnSensorMM ) - FrontCamera.focalLength;
         out.position[2] = distance;
 
@@ -186,7 +186,7 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         boolean fullFrameDetect = false;
         Size minSize = new Size(10,10);
         Size maxSize = new Size(mat.width(),mat.height());
-        double scaleFactor = 1.02;
+        double scaleFactor = 1.03;
         if(prevFaceBounds == null){ //detecting in full picture
             detectionMat = mat;
             fullFrameDetect = true;
@@ -201,15 +201,15 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
 
         long time = System.nanoTime();
         MatOfRect detectionResultMat = new MatOfRect();
-        faceClassifier.detectMultiScale(detectionMat,detectionResultMat,scaleFactor,15,0,minSize,maxSize);
+        faceClassifier.detectMultiScale(detectionMat,detectionResultMat,scaleFactor,3,0,minSize,maxSize);
         long detectTime = System.nanoTime() - time;
 
         Rect[] results = detectionResultMat.toArray();
-        Utils.print("Time to detect " + detectTime + " in mat size" + detectionMat.width()*detectionMat.height() + " Per pixel detect time = " + (detectTime/(detectionMat.width()*detectionMat.height())));
+        //Utils.print("Time to detect " + detectTime + " in mat size" + detectionMat.width()*detectionMat.height() + " Per pixel detect time = " + (detectTime/(detectionMat.width()*detectionMat.height())));
 
         if(results.length != 0){//found results
             if(!fullFrameDetect){ //found results using previous frame
-                Utils.print("Found face using previous bounds");
+                //Utils.print("Found face using previous bounds");
                 results[0].x += prevFaceBounds.x;
                 results[0].y += prevFaceBounds.y;
             }
@@ -241,7 +241,7 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         if(right > w) right =  w;
 
         Rect newBounds = new Rect(left,top,right - left, bottom - top);
-        Utils.print("Created new Bounds: " + newBounds + ", old bounds " + currFace);
+        //Utils.print("Created new Bounds: " + newBounds + ", old bounds " + currFace);
         return newBounds;
     }
 
