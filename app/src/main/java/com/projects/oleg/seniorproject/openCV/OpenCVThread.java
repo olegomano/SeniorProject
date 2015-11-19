@@ -164,11 +164,11 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
 
         float faceCenterX = (float) ((face.br().x + face.tl().x)/2.0);
         float faceCenterY = (float) ((face.br().y + face.tl().y)/2.0);
-        float faceCenterXSensorPix = (faceCenterX/camPictureW)*FrontCamera.sensorActivePixels.width();
-        float faceCenterYSensorPix = (faceCenterY/camPictureH)*FrontCamera.sensorActivePixels.width();
+        float faceCenterXmm = (faceCenterX/camPictureW)*FrontCamera.sensorSizeMM.getWidth() - FrontCamera.sensorSizeMM.getWidth()/2.0f;
+        float faceCenterYmm = (faceCenterY/camPictureH)*FrontCamera.sensorSizeMM.getHeight() - FrontCamera.sensorSizeMM.getHeight()/2.0f;
 
-        float faceXPos = ( (faceCenterXSensorPix - FrontCamera.sensorActivePixels.width()/2.0f)*(distance + FrontCamera.focalLength)*FrontCamera.pixelToMM ) / FrontCamera.focalLength;
-        float faceYPos = ( (faceCenterYSensorPix - FrontCamera.sensorActivePixels.height()/2.0f)*(distance + FrontCamera.focalLength)*FrontCamera.pixelToMM ) / FrontCamera.focalLength;
+        float faceXPos = ( faceCenterXmm *(distance + FrontCamera.focalLength)) / FrontCamera.focalLength;
+        float faceYPos = ( faceCenterYmm *(distance + FrontCamera.focalLength)) / FrontCamera.focalLength;
 
         out.position[0] =  faceXPos;
         out.position[1] = -faceYPos;

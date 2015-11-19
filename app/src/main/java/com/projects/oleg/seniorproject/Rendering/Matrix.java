@@ -32,7 +32,11 @@ public class Matrix {
     }
 
     public void transpose(float[] out){
-        android.opengl.Matrix.transposeM(out,0,matrix,0);
+        android.opengl.Matrix.transposeM(out, 0, matrix, 0);
+    }
+
+    public void mMul(Matrix right, Matrix out){
+        android.opengl.Matrix.multiplyMM(out.matrix,0,matrix,0,right.matrix,0);
     }
 
     public void lookAt(float x, float y, float z){

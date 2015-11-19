@@ -7,12 +7,12 @@ import android.util.AttributeSet;
 
 import com.projects.oleg.seniorproject.Camera.CameraTexture;
 import com.projects.oleg.seniorproject.Camera.FrontCamera;
-import com.projects.oleg.seniorproject.Rendering.Camera;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Box;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Cube;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Quad;
 import com.projects.oleg.seniorproject.Rendering.MGlSurfaceView;
-import com.projects.oleg.seniorproject.Rendering.Texture;
+import com.projects.oleg.seniorproject.Rendering.Texture.Texture;
+import com.projects.oleg.seniorproject.Rendering.Texture.TextureLoader;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -59,9 +59,9 @@ public class TDView extends MGlSurfaceView {
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         super.onSurfaceCreated(gl,config);
-        cubeTxt = Texture.loadTexture(getContext(),R.drawable.cube_texture);
-        faceBoundTxt = Texture.loadTexture(getContext(), R.drawable.face_boundbox);
-        woodTxt = Texture.loadTexture(getContext(),R.drawable.cube_wood_texture);
+        cubeTxt = TextureLoader.loadTexture(R.drawable.cube_texture);
+        faceBoundTxt = TextureLoader.loadTexture(R.drawable.face_boundbox);
+        woodTxt = TextureLoader.loadTexture(R.drawable.cube_wood_texture);
         camera.getMatrix().setPosition(0, 0, -5f);
         camera.createFrustrum(1, 100, -1, 1, -1, 1);
         cube.setTexture(cubeTxt);

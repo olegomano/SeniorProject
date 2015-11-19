@@ -12,10 +12,13 @@ import com.projects.oleg.seniorproject.MainActivity;
 import com.projects.oleg.seniorproject.R;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Box;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Cube;
+import com.projects.oleg.seniorproject.Rendering.Geometry.Mesh;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Quad;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Renderable;
+import com.projects.oleg.seniorproject.Rendering.Geometry.RenderableObj;
 import com.projects.oleg.seniorproject.Rendering.Shader.Shader2D;
 import com.projects.oleg.seniorproject.Rendering.Shader.Shader3D;
+import com.projects.oleg.seniorproject.Rendering.Texture.TextureLoader;
 import com.projects.oleg.seniorproject.Utils;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -41,7 +44,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         super(context);
     }
 
-    public void onInit(){};
+    public void onInit(){ TextureLoader.initTextureLoader(getContext());};
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -77,7 +80,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         lastFrame = frameTime;
         if(fpsTime > 1000000000){
             Utils.print("FPS: " + frame);
-            DebugView.putRenderFPS(""+frame);
+            DebugView.putRenderFPS("" + frame);
             frame = 0;
             fpsTime = 0;
         }
@@ -159,5 +162,47 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         GLES20.glDisableVertexAttribArray(shader3D.getVertexHandle());
         GLES20.glDisableVertexAttribArray(shader3D.getUvHandle());
 
+    }
+
+    public void draw3DVBO(Renderable toRender){
+        GLES20.glUseProgram(shader3D.getProgramHandle());
+        Utils.checkGlError("Use Program");
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, toRender.getVBO());
+        GLES20.glEnableVertexAttribArray(shader3D.getVertexHandle());
+        GLES20.glEnableVertexAttribArray(shader3D.getUvHandle());
+        Utils.checkGlError("Enabled Attrib Arrays");
+
+        GLES20.glVertexAttribPointer(shader3D.getVertexHandle(), 4, GLES20.GL_FLOAT, false, toRender.getStride() * 4, toRender.getVertOffset() * 4);
+        Utils.checkGlError("Passed vertex");
+        GLES20.glVertexAttribPointer(shader3D.getUvHandle(), 2, GLES20.GL_FLOAT, false, toRender.getStride() * 4, toRender.getUVOffset() * 4);
+        Utils.checkGlError("Passed UV");
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, toRender.getTexture().getTexture());
+        GLES20.glUniform1i(shader3D.getSamplerHandle(), 0);
+        Utils.checkGlError("Passed Texture");
+
+        android.opengl.Matrix.multiplyMM(mvpMat, 0, camera.getProjectionCamera(), 0, toRender.getModelMatrix().getMatrix(), 0);
+        GLES20.glUniformMatrix4fv(shader3D.getMvpMatHandle(), 1, false, mvpMat, 0);
+        Utils.checkGlError("Passed uniform matrix");
+        GLES20.glUniform3fv(shader3D.getScaleHandle(), 1, toRender.getModelMatrix().getScale(), 0);
+        Utils.checkGlError("passed scale");
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, toRender.getVertexCount());
+
+        GLES20.glDisableVertexAttribArray(shader3D.getUvHandle());
+        GLES20.glDisableVertexAttribArray(shader3D.getVertexHandle());
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+
+        Utils.checkGlError("Draw VBO 3D");
+
+    }
+
+    public void drawRenderableObj(RenderableObj toRender){
+        Mesh[] meshes = toRender.getMeshes();
+        for(int i = 0; i < meshes.length;i++){
+            draw3DVBO(meshes[i]);
+        }
     }
 }

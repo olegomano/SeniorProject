@@ -11,11 +11,16 @@ import com.projects.oleg.seniorproject.Camera.FrontCamera;
 import com.projects.oleg.seniorproject.DebugView.DebugView;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Box;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Cube;
+import com.projects.oleg.seniorproject.Rendering.Geometry.RenderableObj;
 import com.projects.oleg.seniorproject.Rendering.MGlSurfaceView;
-import com.projects.oleg.seniorproject.Rendering.Texture;
+import com.projects.oleg.seniorproject.Rendering.ObjParser.ObjLoader;
+import com.projects.oleg.seniorproject.Rendering.Texture.Texture;
+import com.projects.oleg.seniorproject.Rendering.Texture.TextureLoader;
 import com.projects.oleg.seniorproject.openCV.Face;
 import com.projects.oleg.seniorproject.openCV.FaceRecognitionListener;
 import com.projects.oleg.seniorproject.openCV.OpenCVThread;
+
+import java.io.IOException;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -23,10 +28,10 @@ import javax.microedition.khronos.opengles.GL10;
  * Created by Oleg Tolstov on 9:47 PM, 11/11/15. SeniorProject
  */
 public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
-    private Cube closeCube;
-    private Cube farCube;
+    private Cube[] cubes = new Cube[12];
     private Box box;
     private Texture woodTexture;
+    private RenderableObj mModel;
 
     private volatile Object drawLock = new Object();
 
@@ -63,24 +68,41 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
         super.onInit();
         initCamera();
         Utils.print("Initializing scene");
-        closeCube = new Cube();
-        farCube = new Cube();
         box = new Box();
-        closeCube.getModelMatrix().setPosition(0, 0, 1);
-        farCube.getModelMatrix().setPosition(0, 0, -2);
         camera.createFrustrum(1, 100, -1, 1, -1, 1);
-
-        closeCube.getModelMatrix().setScale(screenWInches*.35f, screenWInches*.35f, 1);
-        farCube.getModelMatrix().setScale(screenWInches*.35f, screenWInches*.35f, 1);
-        box.getModelMatrix().setScale(1.15f*screenWInches, 1.15f*screenHInches, 12.5f);
-
+        box.getModelMatrix().setScale(screenWInches,screenHInches, 8);
+        positionCubes();
         camera.getMatrix().setPosition(0, 0, 0);
-        woodTexture = Texture.loadTexture(getContext(),R.drawable.cube_texture);
-        Texture boxTexture = Texture.loadTexture(getContext(),R.drawable.cube_wood_texture);
-        closeCube.setTexture(woodTexture);
-        farCube.setTexture(woodTexture);
+        Texture boxTexture = TextureLoader.loadTexture(R.drawable.cube_wood_texture);
         box.setTexture(boxTexture);
         Utils.print("Camera: " + camera);
+        try {
+            mModel = new RenderableObj( ObjLoader.loadObj(getContext(),"cube.obj") );
+            mModel.getModelMatrix().setPosition(0,0,-3);
+            mModel.getModelMatrix().setScale(.3f,.3f,1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void positionCubes(){
+        woodTexture = TextureLoader.loadTexture(R.drawable.cube_texture);
+        float closest = 2;
+        float farthest = -10;
+        float leftMost = -screenWInches/2.0f;
+        float rightMost = screenWInches/2.0f;
+        float maxYOffset = screenHInches/2.0f;
+
+        for(int i = 0; i < cubes.length; i++){
+            cubes[i] = new Cube();
+            cubes[i].setTexture(woodTexture);
+
+            cubes[i].getModelMatrix().setPosition( leftMost + (((rightMost - leftMost)/cubes.length)*i), Utils.genRand(-maxYOffset,maxYOffset),Utils.genRand(farthest,closest));
+
+            cubes[i].getModelMatrix().setScale( screenHInches*.45f,screenHInches*.45f,1.0f);
+        }
+
     }
 
     @Override
@@ -89,9 +111,12 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
         synchronized (drawLock) {
-            draw3D(farCube);
-            draw3D(closeCube);
+            for(int i = 0; i < cubes.length; i++){
+            //    draw3D(cubes[i]);
+            }
             draw3D(box);
+            drawRenderableObj(mModel);
+
         }
     }
 
@@ -106,17 +131,17 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
     public void onRecognized(Face f, Bitmap frame) {
         newDetections++;
         long frameTime = System.nanoTime();
-        if(frameTimels - lastPost > Utils.SECOND_TO_NANO){
+        if(frameTime - lastPost > Utils.SECOND_TO_NANO){
             DebugView.putRecogFPS(""+newDetections);
             newDetections=0;
             lastPost = frameTime;
         }
 
         if(f==null){
-            DebugView.putRecogStatus("FALSE");
+            DebugView.putRecogStatus("FALSE (NEW VER)");
             return;
         }
-        DebugView.putRecogStatus("TRUE");
+        DebugView.putRecogStatus("TRUE (NEW VER)");
         synchronized (drawLock){
             float[] headPosition = f.getPosition();
             if(Math.abs( headPosition[0] - lastSigX) < threashHold && Math.abs( headPosition[1] - lastSigY ) < threashHold && Math.abs( headPosition[2] - lastSigZ )< threashHold){
@@ -127,13 +152,14 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
             lastSigZ = headPosition[2];
             Utils.print("Face detected: " + headPosition[0] + ", " + headPosition[1] + ", " + headPosition[2]);
             //camera.getMatrix().setPosition(0, 0, headPosition[2]);
-            camera.getMatrix().setPosition( headPosition[0]*.65f,headPosition[1]*.65f,-headPosition[2]);
+            camera.getMatrix().setPosition( headPosition[0]*1f,headPosition[1]*1f,-headPosition[2]);
             float dCoeff    =  1.0f / headPosition[2];
-            float frustrumL =  (headPosition[0]*.65f - screenWInches/2.0f)*dCoeff;
-            float frustrumR =  (headPosition[0]*.65f + screenWInches/2.0f)*dCoeff;
-            float frustrumT =  (headPosition[1]*.65f - screenHInches/2.0f)*dCoeff;
-            float frustrumB =  (headPosition[1]*.65f + screenHInches/2.0f)*dCoeff;
-            camera.createFrustrum(1,100,frustrumL,frustrumR,frustrumB,frustrumT);
+            dCoeff = .1f;
+            float frustrumL =  (headPosition[0]*1f - screenWInches/2.0f)*dCoeff;
+            float frustrumR =  (headPosition[0]*1f + screenWInches/2.0f)*dCoeff;
+            float frustrumT =  (headPosition[1]*1f - screenHInches/2.0f)*dCoeff;
+            float frustrumB =  (headPosition[1]*1f + screenHInches/2.0f)*dCoeff;
+            camera.createFrustrum(headPosition[2]*dCoeff,100,frustrumL,frustrumR,frustrumB,frustrumT);
         }
     }
 }

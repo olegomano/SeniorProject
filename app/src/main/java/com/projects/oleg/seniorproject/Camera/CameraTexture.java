@@ -1,10 +1,8 @@
 package com.projects.oleg.seniorproject.Camera;
 
-import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraCaptureSession.CaptureCallback;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
@@ -16,12 +14,10 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.view.Surface;
 
-import com.projects.oleg.seniorproject.MainActivity;
-import com.projects.oleg.seniorproject.Rendering.Texture;
+import com.projects.oleg.seniorproject.Rendering.Texture.Texture;
 import com.projects.oleg.seniorproject.Utils;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 
 /**
  * Created by Oleg Tolstov on 9:35 PM, 10/10/15. SeniorProject

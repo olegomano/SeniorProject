@@ -1,7 +1,7 @@
 package com.projects.oleg.seniorproject.Rendering.Geometry;
 
 import com.projects.oleg.seniorproject.Rendering.Matrix;
-import com.projects.oleg.seniorproject.Rendering.Texture;
+import com.projects.oleg.seniorproject.Rendering.Texture.Texture;
 
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
@@ -17,36 +17,30 @@ public abstract class Renderable {
     public abstract FloatBuffer getUVBuffer();
     public abstract ShortBuffer getIndexBuffer();
 
-    public int getVertexVBO(){return -1;}
-    public int getUvVBO(){return -1;}
-    public int getIndexVBO(){return -1;}
+    public void initVBO(){};
+    public int getVBO(){return -1;}
+
+    public int getStride(){return 4;}
+
+    public int getVertOffset(){return 0;}
+    public int getNormOffset(){return 0;}
+    public int getUVOffset(){return 0;}
+
     public abstract int getVertexCount();
-
-
-    public boolean usesVertexVBO(){
-        return false;
-    }
-
-    public boolean usesUvVBO(){
-        return false;
-    }
+    public boolean usesVBO(){return false;}
 
     public boolean usesIndexList(){
         return false;
     }
-
     public boolean usesIndexVBO(){
         return false;
     }
-
     public Texture getTexture(){
         return texture;
     }
-
     public void setTexture(Texture t){
         texture = t;
     }
-
     public Matrix getModelMatrix(){
         return modelMatrix;
     }

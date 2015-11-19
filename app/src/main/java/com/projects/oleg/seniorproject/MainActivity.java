@@ -11,6 +11,9 @@ import android.widget.TextView;
 
 import com.projects.oleg.seniorproject.DebugView.DebugView;
 import com.projects.oleg.seniorproject.Rendering.MGlSurfaceView;
+import com.projects.oleg.seniorproject.Rendering.ObjParser.ObjLoader;
+
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     private MGlSurfaceView surfaceView;

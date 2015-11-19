@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
@@ -18,10 +19,15 @@ public class Utils {
     public static final float MM_TO_INCH = 0.0393701f;
     public static final float NANO_TO_SECOND = .000000001f;
     public static final float SECOND_TO_NANO = 1000000000;
+    private static Random rand = new Random(System.nanoTime());
     public static void print(String s){
         if(s!=null){
             Log.d("Project", s);
         }
+    }
+
+    public static float genRand(float min, float max){
+        return rand.nextFloat()*(max-min) + min;
     }
 
     public static boolean yuvTbmp(int w, int h,byte[] y, byte[] u,byte[] v,Bitmap bmp){

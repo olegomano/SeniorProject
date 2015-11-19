@@ -11,6 +11,8 @@
 
     <include
         android:id="@+id/debug_view"
+        android:layout_width="500dp"
+        android:layout_height="300dp"
         layout="@layout/debug_view">
     </include>
 
