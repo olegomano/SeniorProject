@@ -79,7 +79,6 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
         try {
             mModel = new RenderableObj( ObjLoader.loadObj(getContext(),"cube.obj") );
             mModel.getModelMatrix().setPosition(0,0,-3);
-            mModel.getModelMatrix().setScale(.3f,.3f,1);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -154,7 +153,7 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
             //camera.getMatrix().setPosition(0, 0, headPosition[2]);
             camera.getMatrix().setPosition( headPosition[0]*1f,headPosition[1]*1f,-headPosition[2]);
             float dCoeff    =  1.0f / headPosition[2];
-            dCoeff = .1f;
+            dCoeff = 1f;
             float frustrumL =  (headPosition[0]*1f - screenWInches/2.0f)*dCoeff;
             float frustrumR =  (headPosition[0]*1f + screenWInches/2.0f)*dCoeff;
             float frustrumT =  (headPosition[1]*1f - screenHInches/2.0f)*dCoeff;

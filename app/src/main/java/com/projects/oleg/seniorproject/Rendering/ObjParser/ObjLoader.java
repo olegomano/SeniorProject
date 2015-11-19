@@ -25,17 +25,15 @@ public class ObjLoader {
     private static String OBJECT = "o";
     private static String GROUP = "g";
 
-    public static ArrayList<Obj> loadObj(Context context, String name) throws IOException {
+    public static Obj loadObj(Context context, String name) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader( context.getAssets().open(name)));
         String line = reader.readLine();
-
-        ArrayList<Obj> objects =  new ArrayList<>();
         ArrayList<Float> normalList = new ArrayList<>();
         ArrayList<Float> vertexList = new ArrayList<>();
         ArrayList<Float> uvList = new ArrayList<>();
-        MaterialLib materialLib  = null;
 
-        Obj currObject = null;
+        Obj obj = null;
+
         while(line != null){
             Utils.print("Processing line: " + line);
             String[] lineSplit = line.split("\\s+");
@@ -45,33 +43,32 @@ public class ObjLoader {
                     Utils.print("Comment, IGNORING LINE ");
                 }else if(lineSplit[0].compareTo(MAT_REF)==0){
                     Utils.print("Material Reference: " + lineSplit[1]);
-                    if(currObject==null){
+                    if(obj.getCurrGroup()==null){
                         Utils.print("Malformed file, no object declared");
                         return null;
                     }
-                    if(materialLib == null){
+                    if(obj.getMatLib() == null){
                         Utils.print("Malformed file, no materialLib declared");
                         return null;
                     }
-                    currObject.mMat = materialLib.getMaterial(lineSplit[1]);
+                    obj.setGroupMat(lineSplit[1]);
                 }else if(lineSplit[0].compareTo(SMOOTHING) == 0){
                     Utils.print("Smoothing");
                 }else if(lineSplit[0].compareTo(MAT_LIB) == 0){
                     Utils.print("Material Library: " + lineSplit[1]);
-                    materialLib = new MaterialLib(context,lineSplit[1]);
+                    obj.setMatLib( new MaterialLib(context,lineSplit[1]) );
                 }else if(lineSplit[0].compareTo(OBJECT)==0){
                     Utils.print("Object name: " + lineSplit[1]);
-                    currObject = new Obj();
-                    currObject.name = lineSplit[1];
-                    objects.add(currObject);
+                    obj = new Obj(lineSplit[1]);
                 }else if(lineSplit[0].compareTo(FACE)==0){
                     Utils.print("parcing face");
                     float[] faceTris = parseFace(lineSplit,vertexList,normalList,uvList);
                     for(int i = 0; i < faceTris.length;i++){
-                        currObject.data.add(faceTris[i]);
+                        obj.getCurrGroup().floatBuffer.add(faceTris[i]);
                     }
                 }else if(lineSplit[0].compareTo(GROUP)==0){
                     Utils.print("Group: " + lineSplit[1]);
+                    obj.createGroup(lineSplit[1]);
                 }else {
                     float x = Float.parseFloat(lineSplit[1]);
                     float y = Float.parseFloat( lineSplit[2] );
@@ -93,11 +90,8 @@ public class ObjLoader {
                 line = reader.readLine();
             }
         };
-        Utils.print("Got " + objects.size() + " from file");
-        for(int i = 0; i < objects.size(); i++){
-            Utils.print(objects.get(i).toString());
-        }
-        return objects;
+        Utils.print("Created Object: " + obj.toString());
+        return obj;
     }
 
 

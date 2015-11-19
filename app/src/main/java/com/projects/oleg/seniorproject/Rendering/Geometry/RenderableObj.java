@@ -21,10 +21,10 @@ public class RenderableObj {
     private Matrix modelMatrix = new Matrix();
     private Mesh[] meshes;
 
-    public RenderableObj(ArrayList<Obj> m){
-        meshes = new Mesh[m.size()];
+    public RenderableObj(Obj o){
+        meshes = new Mesh[o.getGroups().size()];
         for(int i = 0; i < meshes.length;i++){
-            meshes[i] = new Mesh(m.get(i),this);
+            meshes[i] = new Mesh(o.getGroups().get(i),this);
         }
     }
 

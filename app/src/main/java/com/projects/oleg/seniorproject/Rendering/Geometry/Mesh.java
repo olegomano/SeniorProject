@@ -3,6 +3,7 @@ package com.projects.oleg.seniorproject.Rendering.Geometry;
 import android.opengl.GLES20;
 
 import com.projects.oleg.seniorproject.Rendering.Matrix;
+import com.projects.oleg.seniorproject.Rendering.ObjParser.Group;
 import com.projects.oleg.seniorproject.Rendering.ObjParser.Material;
 import com.projects.oleg.seniorproject.Rendering.ObjParser.Obj;
 import com.projects.oleg.seniorproject.Rendering.Texture.Texture;
@@ -23,18 +24,18 @@ public class Mesh extends Renderable{
     private Matrix mulledMat = new Matrix();
     private int vertCount = 0;
 
-    public Mesh(Obj obj, RenderableObj p){
-        ByteBuffer verts = ByteBuffer.allocateDirect(obj.getData().size()*4);
+    public Mesh(Group g, RenderableObj p){
+        ByteBuffer verts = ByteBuffer.allocateDirect(g.getData().size()*4);
         verts.order(ByteOrder.nativeOrder());
-        vertCount = obj.getData().size()/10;
+        vertCount = g.getData().size()/10;
         Utils.print("Created Mesh with " + vertCount + " vertecies");
         FloatBuffer mData = verts.asFloatBuffer();
-        for(int i = 0; i < obj.getData().size(); i++){
-            mData.put(i,obj.getData().get(i));
+        for(int i = 0; i < g.getData().size(); i++){
+            mData.put(i,g.getData().get(i));
         }
         mData.position(0);
         vboID = createVBO(mData);
-        mat = obj.getMat();
+        mat = g.getMat();
         mat.loadTexture();
         parent = p;
     }
