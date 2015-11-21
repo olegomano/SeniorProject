@@ -72,6 +72,11 @@ public class Utils {
         }
     }
 
+
+    public static void crossProduct(float[] v1,int v1Offset, float[] v2, int v2Offset, float[] out, int outOffset){
+
+    }
+
     public static float getMagnitude(float[] vec){
         float sum = 0;
         for(int i = 0; i < 3; i++){

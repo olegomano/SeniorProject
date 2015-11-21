@@ -20,6 +20,7 @@ import java.util.LinkedList;
 public class MaterialLib {
     private final static String MAT_DECLR = "newmtl";
     private final static String TEXT_NAME = "map_Kd";
+    private final static String TEXT_BUMP = "map_Bump";
 
     private HashMap<String,Material> materials = new HashMap<>();
     private String mName = "";
@@ -43,6 +44,8 @@ public class MaterialLib {
                     return;
                 }
                 currMat.texturePath = lineSplit[1];
+                currMat.usesTexture = true;
+                Utils.print("Texture path: " + lineSplit[1]);
             }
             line = reader.readLine();
         }

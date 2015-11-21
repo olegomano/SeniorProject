@@ -36,7 +36,9 @@ public class Mesh extends Renderable{
         mData.position(0);
         vboID = createVBO(mData);
         mat = g.getMat();
-        mat.loadTexture();
+        if(mat.usesTexture()) {
+            mat.loadTexture();
+        }
         parent = p;
     }
 
@@ -48,6 +50,8 @@ public class Mesh extends Renderable{
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER,0);
         return vboID[0];
     }
+
+    public boolean usesTexture(){return mat.usesTexture();}
 
     @Override
     public int getVBO(){

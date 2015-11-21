@@ -45,4 +45,12 @@ public class Group {
         }
         return retS;
     }
+
+    public void scale(float x, float y, float z){
+        for(int i = 0;i < floatBuffer.size(); i+=4) {
+            floatBuffer.set(i, floatBuffer.get(i)/x);
+            floatBuffer.set(i + 1,floatBuffer.get(i + 1)/y);
+            floatBuffer.set(i + 2,floatBuffer.get(i + 2)/z);
+        }
+    }
 }

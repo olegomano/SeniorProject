@@ -11,9 +11,16 @@ public class Obj {
     private ArrayList<Group> groups = new ArrayList<>();
     private int curGroup = -1;
     private MaterialLib matLib;
+    private float width;
+    private float height;
+    private float depth;
 
-    public Obj(String s){
-        name = s;
+    public Obj(){
+
+    }
+
+    public void setName(String name){
+        this.name = name;
     }
 
     public String toString(){
@@ -49,6 +56,12 @@ public class Obj {
 
     public Group getCurrGroup(){
         return groups.get(curGroup);
+    }
+
+    public void scale(int x){
+        for(int i = 0; i < groups.size(); i++){
+            groups.get(i).scale(x,x,x);
+        }
     }
 
 

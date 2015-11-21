@@ -86,7 +86,6 @@ public class Cube extends Renderable {
         return vertCount;
     }
 
-    @Override
     public boolean usesIndexList(){
         return true;
     }

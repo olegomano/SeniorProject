@@ -13,6 +13,7 @@ import com.projects.oleg.seniorproject.Rendering.Geometry.Box;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Cube;
 import com.projects.oleg.seniorproject.Rendering.Geometry.RenderableObj;
 import com.projects.oleg.seniorproject.Rendering.MGlSurfaceView;
+import com.projects.oleg.seniorproject.Rendering.ObjParser.Obj;
 import com.projects.oleg.seniorproject.Rendering.ObjParser.ObjLoader;
 import com.projects.oleg.seniorproject.Rendering.Texture.Texture;
 import com.projects.oleg.seniorproject.Rendering.Texture.TextureLoader;
@@ -27,13 +28,14 @@ import javax.microedition.khronos.opengles.GL10;
 /**
  * Created by Oleg Tolstov on 9:47 PM, 11/11/15. SeniorProject
  */
-public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
+public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener, ObjLoader.OnLoadingComplete {
     private Cube[] cubes = new Cube[12];
     private Box box;
     private Texture woodTexture;
     private RenderableObj mModel;
 
     private volatile Object drawLock = new Object();
+    private volatile Obj toInit;
 
     public TDView2(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -70,19 +72,13 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
         Utils.print("Initializing scene");
         box = new Box();
         camera.createFrustrum(1, 100, -1, 1, -1, 1);
-        box.getModelMatrix().setScale(screenWInches,screenHInches, 8);
+        box.getModelMatrix().setScale(screenWInches, screenHInches, 8);
         positionCubes();
         camera.getMatrix().setPosition(0, 0, 0);
         Texture boxTexture = TextureLoader.loadTexture(R.drawable.cube_wood_texture);
         box.setTexture(boxTexture);
         Utils.print("Camera: " + camera);
-        try {
-            mModel = new RenderableObj( ObjLoader.loadObj(getContext(),"cube.obj") );
-            mModel.getModelMatrix().setPosition(0,0,-3);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        ObjLoader.LoadObject(getContext(),"FlyTriangulated.obj",this);
     }
 
     private void positionCubes(){
@@ -92,16 +88,12 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
         float leftMost = -screenWInches/2.0f;
         float rightMost = screenWInches/2.0f;
         float maxYOffset = screenHInches/2.0f;
-
         for(int i = 0; i < cubes.length; i++){
             cubes[i] = new Cube();
             cubes[i].setTexture(woodTexture);
-
             cubes[i].getModelMatrix().setPosition( leftMost + (((rightMost - leftMost)/cubes.length)*i), Utils.genRand(-maxYOffset,maxYOffset),Utils.genRand(farthest,closest));
-
             cubes[i].getModelMatrix().setScale( screenHInches*.45f,screenHInches*.45f,1.0f);
         }
-
     }
 
     @Override
@@ -114,12 +106,17 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
             //    draw3D(cubes[i]);
             }
             draw3D(box);
-            drawRenderableObj(mModel);
-
+            if(toInit!=null){
+                mModel = new RenderableObj(toInit);
+                toInit = null;
+            }
+            if(mModel!=null) {
+                drawRenderableObj(mModel);
+            }
         }
     }
 
-    private float threashHold = .1f;
+    private float threashHold = .00001f;
     private float lastSigX = 0;
     private float lastSigY = 0;
     private float lastSigZ = 0;
@@ -143,7 +140,7 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
         DebugView.putRecogStatus("TRUE (NEW VER)");
         synchronized (drawLock){
             float[] headPosition = f.getPosition();
-            if(Math.abs( headPosition[0] - lastSigX) < threashHold && Math.abs( headPosition[1] - lastSigY ) < threashHold && Math.abs( headPosition[2] - lastSigZ )< threashHold){
+            if(Math.abs( Math.abs( headPosition[0] - lastSigX) ) < threashHold && Math.abs( headPosition[1] - lastSigY ) < threashHold && Math.abs( headPosition[2] - lastSigZ )< threashHold){
                 return;
             }
             lastSigX = headPosition[0];
@@ -159,6 +156,13 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener{
             float frustrumT =  (headPosition[1]*1f - screenHInches/2.0f)*dCoeff;
             float frustrumB =  (headPosition[1]*1f + screenHInches/2.0f)*dCoeff;
             camera.createFrustrum(headPosition[2]*dCoeff,100,frustrumL,frustrumR,frustrumB,frustrumT);
+        }
+    }
+
+    @Override
+    public void onLoaded(Obj o) {
+        synchronized (drawLock){
+            toInit = o;
         }
     }
 }

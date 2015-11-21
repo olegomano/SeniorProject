@@ -202,7 +202,9 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
     public void drawRenderableObj(RenderableObj toRender){
         Mesh[] meshes = toRender.getMeshes();
         for(int i = 0; i < meshes.length;i++){
-            draw3DVBO(meshes[i]);
+            if(meshes[i].usesTexture()) {
+                draw3DVBO(meshes[i]);
+            }
         }
     }
 }

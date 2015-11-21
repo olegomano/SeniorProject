@@ -19,8 +19,8 @@ public abstract class Renderable {
 
     public void initVBO(){};
     public int getVBO(){return -1;}
-
     public int getStride(){return 4;}
+
 
     public int getVertOffset(){return 0;}
     public int getNormOffset(){return 0;}
@@ -35,6 +35,8 @@ public abstract class Renderable {
     public boolean usesIndexVBO(){
         return false;
     }
+
+    public boolean usesTexture(){return true;}
     public Texture getTexture(){
         return texture;
     }

@@ -5,14 +5,15 @@ import android.opengl.GLES20;
 import com.projects.oleg.seniorproject.Utils;
 
 /**
- * Created by Oleg Tolstov on 7:45 PM, 10/16/15. SeniorProject
+ * Created by Oleg Tolstov on 7:39 PM, 11/20/15. SeniorProject
  */
-public class Shader3D {
+public class Shader3DObj {
     private static final String vertexShader =
-                    "precision mediump float;"+
+            "precision mediump float;"+
                     "uniform   mat4  mvpMat;"+
                     "uniform   float screenRatio;"+
                     "uniform   vec3 scale;"+
+                    "attribute vec4 aVertNorm;"+
                     "attribute vec4 aVertex;" +
                     "attribute vec2 aUV;" +
                     "varying   vec2 vUV;" +
@@ -27,7 +28,7 @@ public class Shader3D {
                     "}\n";
 
     private static final String fragmentShader =
-                    "precision  mediump float;" +
+            "precision  mediump float;" +
                     "varying    vec2 vUV;" +
                     "uniform    sampler2D texture;"+
                     "void main() {" +

@@ -12,6 +12,7 @@ public class Material{
     String name = "";//name of material in .mat file
     String texturePath = ""; //path to image int assets folder
     Texture glTexture;
+    boolean usesTexture = false;
     private boolean textureLoaded = false;
 
 
@@ -28,6 +29,10 @@ public class Material{
         }
         textureLoaded = true;
         return true;
+    }
+
+    public boolean usesTexture(){
+        return usesTexture;
     }
 
     public boolean isLoadedGL(){

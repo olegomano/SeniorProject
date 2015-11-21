@@ -18,11 +18,17 @@ import java.util.HashMap;
  * Created by Oleg Tolstov on 11:17 PM, 11/16/15. SeniorProject
  */
 public class TextureLoader {
+    private static final String FALLBACK_TEXTURE_KEY = "FALLBACK_TEXTURE";
+
     private static HashMap<String,Texture> textureTable = new HashMap<>();
     private static Context context;
 
     public static void initTextureLoader(Context c){
         context = c;
+    }
+
+    public static void createFallbackTexture(){
+
     }
 
     public static void loadMatLib(MaterialLib lib){
@@ -53,6 +59,10 @@ public class TextureLoader {
             Texture t =  loadTexture(bitmap);
             bitmap.recycle();
             return t;
+    }
+
+    public static Texture getFallbackTexture(){
+        return textureTable.get(FALLBACK_TEXTURE_KEY);
     }
 
 
