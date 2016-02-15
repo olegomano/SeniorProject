@@ -36,9 +36,7 @@ public class Mesh extends Renderable{
         mData.position(0);
         vboID = createVBO(mData);
         mat = g.getMat();
-        if(mat.usesTexture()) {
-            mat.loadTexture();
-        }
+        mat.loadTexture();
         parent = p;
     }
 

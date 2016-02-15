@@ -20,12 +20,18 @@ import java.util.ArrayList;
 public class RenderableObj {
     private Matrix modelMatrix = new Matrix();
     private Mesh[] meshes;
+    private String name = "";
 
     public RenderableObj(Obj o){
+        name = o.getName();
         meshes = new Mesh[o.getGroups().size()];
         for(int i = 0; i < meshes.length;i++){
             meshes[i] = new Mesh(o.getGroups().get(i),this);
         }
+    }
+
+    public String getName(){
+        return name;
     }
 
     public Mesh[] getMeshes(){

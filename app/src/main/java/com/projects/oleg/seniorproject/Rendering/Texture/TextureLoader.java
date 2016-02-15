@@ -3,6 +3,7 @@ package com.projects.oleg.seniorproject.Rendering.Texture;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
@@ -28,6 +29,17 @@ public class TextureLoader {
     }
 
     public static void createFallbackTexture(){
+        Bitmap fallBacktxt = Bitmap.createBitmap(16,16, Bitmap.Config.ARGB_8888);
+        for(int i = 0; i < 16; i++){
+            for(int b = 0; b < 16; b++){
+                if( (i+b)%2 == 0 ){
+                    fallBacktxt.setPixel(i,b, Color.GRAY);
+                }else{
+                    fallBacktxt.setPixel(i,b, Color.CYAN);
+                }
+            }
+        }
+        textureTable.put(FALLBACK_TEXTURE_KEY, loadTexture(fallBacktxt) );
 
     }
 

@@ -43,9 +43,14 @@ public class MaterialLib {
                     Utils.print("ERRROR PARSING MATLIB, NO MATERIAL DECLARED");
                     return;
                 }
-                currMat.texturePath = lineSplit[1];
-                currMat.usesTexture = true;
-                Utils.print("Texture path: " + lineSplit[1]);
+                try{
+                    context.getAssets().open(lineSplit[1]);
+                    currMat.texturePath = lineSplit[1];
+                    currMat.usesTexture = true;
+                    Utils.print("Texture path: " + lineSplit[1]);
+                }catch (Exception e){
+                    Utils.print(e.toString());
+                }
             }
             line = reader.readLine();
         }

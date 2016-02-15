@@ -21,7 +21,7 @@ public class Utils {
     public static final float SECOND_TO_NANO = 1000000000;
     private static Random rand = new Random(System.nanoTime());
     public static void print(String s){
-        if(s!=null){
+        if(s!=null && false){
             Log.d("Project", s);
         }
     }

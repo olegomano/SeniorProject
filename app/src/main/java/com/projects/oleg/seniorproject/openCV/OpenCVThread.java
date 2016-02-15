@@ -206,7 +206,6 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
 
         Rect[] results = detectionResultMat.toArray();
         //Utils.print("Time to detect " + detectTime + " in mat size" + detectionMat.width()*detectionMat.height() + " Per pixel detect time = " + (detectTime/(detectionMat.width()*detectionMat.height())));
-
         if(results.length != 0){//found results
             if(!fullFrameDetect){ //found results using previous frame
                 //Utils.print("Found face using previous bounds");
@@ -241,7 +240,6 @@ public class OpenCVThread extends Thread implements CameraImage.OnImageReadyList
         if(right > w) right =  w;
 
         Rect newBounds = new Rect(left,top,right - left, bottom - top);
-        //Utils.print("Created new Bounds: " + newBounds + ", old bounds " + currFace);
         return newBounds;
     }
 

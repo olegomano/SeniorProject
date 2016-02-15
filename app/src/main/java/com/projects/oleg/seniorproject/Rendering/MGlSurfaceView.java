@@ -18,6 +18,7 @@ import com.projects.oleg.seniorproject.Rendering.Geometry.Renderable;
 import com.projects.oleg.seniorproject.Rendering.Geometry.RenderableObj;
 import com.projects.oleg.seniorproject.Rendering.Shader.Shader2D;
 import com.projects.oleg.seniorproject.Rendering.Shader.Shader3D;
+import com.projects.oleg.seniorproject.Rendering.Shader.Shader3DObj;
 import com.projects.oleg.seniorproject.Rendering.Texture.TextureLoader;
 import com.projects.oleg.seniorproject.Utils;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -34,6 +35,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
 
     private Shader2D shader2D = new Shader2D();
     private Shader3D shader3D = new Shader3D();
+    private Shader3DObj objShader = new Shader3DObj();
 
 
     public MGlSurfaceView(Context context, AttributeSet attrs) {
@@ -55,6 +57,7 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         shader2D.compile();
         shader3D.compile();
+        objShader.compile();
         camera.createFrustrum(1, 100, -1, 1, -1, 1);
     }
 
@@ -144,7 +147,6 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
         GLES20.glUniform1f(shader3D.getScreenRatioHandle(), screenRatio);
         Utils.checkGlError("glUniform1f screenRatio");
 
-
         android.opengl.Matrix.multiplyMM(mvpMat, 0, camera.getProjectionCamera(), 0, renderable.getModelMatrix().getMatrix(), 0);
         GLES20.glUniformMatrix4fv(shader3D.getMvpMatHandle(), 1, false, mvpMat, 0);
         Utils.checkGlError("Passed uniform matrix");
@@ -164,46 +166,62 @@ public class MGlSurfaceView extends GLSurfaceView implements GLSurfaceView.Rende
 
     }
 
-    public void draw3DVBO(Renderable toRender){
-        GLES20.glUseProgram(shader3D.getProgramHandle());
+    public void draw3DVBO(Renderable toRender, Matrix light){
+        GLES20.glUseProgram(objShader.getProgramHandle());
         Utils.checkGlError("Use Program");
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, toRender.getVBO());
-        GLES20.glEnableVertexAttribArray(shader3D.getVertexHandle());
-        GLES20.glEnableVertexAttribArray(shader3D.getUvHandle());
+        GLES20.glEnableVertexAttribArray(objShader.getVertexHandle());
+        GLES20.glEnableVertexAttribArray(objShader.getUvHandle());
+        GLES20.glEnableVertexAttribArray(objShader.getVertNormalHandle());
         Utils.checkGlError("Enabled Attrib Arrays");
 
-        GLES20.glVertexAttribPointer(shader3D.getVertexHandle(), 4, GLES20.GL_FLOAT, false, toRender.getStride() * 4, toRender.getVertOffset() * 4);
+        GLES20.glUniform1f(objShader.getScreenRatioHandle(), screenRatio);
+        Utils.checkGlError("glUniform1f screenRatio");
+
+
+        GLES20.glVertexAttribPointer(objShader.getVertexHandle(), 4, GLES20.GL_FLOAT, false, toRender.getStride() * 4, toRender.getVertOffset() * 4);
         Utils.checkGlError("Passed vertex");
-        GLES20.glVertexAttribPointer(shader3D.getUvHandle(), 2, GLES20.GL_FLOAT, false, toRender.getStride() * 4, toRender.getUVOffset() * 4);
+        GLES20.glVertexAttribPointer(objShader.getVertNormalHandle(), 4, GLES20.GL_FLOAT, false, toRender.getStride() * 4, toRender.getNormOffset() * 4);
+        Utils.checkGlError("Passed Normal");
+        GLES20.glVertexAttribPointer(objShader.getUvHandle(), 2, GLES20.GL_FLOAT, false, toRender.getStride() * 4, toRender.getUVOffset() * 4);
         Utils.checkGlError("Passed UV");
+
+        GLES20.glUniform3fv(objShader.getDirLightHandle(), 1, new float[]{0, 0, 1}, 0);
+        Utils.checkGlError("Passed Dir Light");
+
+        Matrix unitMatrix = new Matrix();
+        GLES20.glUniformMatrix4fv(objShader.getModelMatHandle(), 1, false, toRender.getModelMatrix().getMatrix(), 0);
+        Utils.checkGlError("Passed model mat");
+
+        android.opengl.Matrix.multiplyMM(mvpMat, 0, camera.getProjectionCamera(), 0, toRender.getModelMatrix().getMatrix(), 0);
+        GLES20.glUniformMatrix4fv(objShader.getMvpMatHandle(), 1, false, mvpMat, 0);
+        Utils.checkGlError("Passed mvp matrix");
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, toRender.getTexture().getTexture());
-        GLES20.glUniform1i(shader3D.getSamplerHandle(), 0);
+        GLES20.glUniform1i(objShader.getSamplerHandle(), 0);
         Utils.checkGlError("Passed Texture");
 
-        android.opengl.Matrix.multiplyMM(mvpMat, 0, camera.getProjectionCamera(), 0, toRender.getModelMatrix().getMatrix(), 0);
-        GLES20.glUniformMatrix4fv(shader3D.getMvpMatHandle(), 1, false, mvpMat, 0);
-        Utils.checkGlError("Passed uniform matrix");
-        GLES20.glUniform3fv(shader3D.getScaleHandle(), 1, toRender.getModelMatrix().getScale(), 0);
+        GLES20.glUniform3fv(objShader.getScaleHandle(), 1, toRender.getModelMatrix().getScale(), 0);
         Utils.checkGlError("passed scale");
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, toRender.getVertexCount());
 
-        GLES20.glDisableVertexAttribArray(shader3D.getUvHandle());
-        GLES20.glDisableVertexAttribArray(shader3D.getVertexHandle());
+        GLES20.glDisableVertexAttribArray(objShader.getUvHandle());
+        GLES20.glDisableVertexAttribArray(objShader.getVertexHandle());
+        GLES20.glDisableVertexAttribArray(objShader.getVertNormalHandle());
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         Utils.checkGlError("Draw VBO 3D");
 
     }
 
-    public void drawRenderableObj(RenderableObj toRender){
+    public void drawRenderableObj(RenderableObj toRender, Matrix light){
         Mesh[] meshes = toRender.getMeshes();
         for(int i = 0; i < meshes.length;i++){
             if(meshes[i].usesTexture()) {
-                draw3DVBO(meshes[i]);
+                draw3DVBO(meshes[i],light);
             }
         }
     }

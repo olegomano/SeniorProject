@@ -7,7 +7,7 @@ import java.util.Stack;
  * Created by Oleg Tolstov on 11:36 PM, 11/16/15. SeniorProject
  */
 public class Obj {
-    private String name;
+    String name;
     private ArrayList<Group> groups = new ArrayList<>();
     private int curGroup = -1;
     private MaterialLib matLib;
@@ -19,8 +19,8 @@ public class Obj {
 
     }
 
-    public void setName(String name){
-        this.name = name;
+    public String getName(){
+        return name;
     }
 
     public String toString(){

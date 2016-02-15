@@ -2,6 +2,7 @@ package com.projects.oleg.seniorproject.Rendering.ObjParser;
 
 import com.projects.oleg.seniorproject.Rendering.Texture.Texture;
 import com.projects.oleg.seniorproject.Rendering.Texture.TextureLoader;
+import com.projects.oleg.seniorproject.Utils;
 
 import java.io.IOException;
 
@@ -21,12 +22,20 @@ public class Material{
     }
 
     public boolean loadTexture(){
+        if(!usesTexture){
+            Utils.print("No default texture, using fallback");
+            glTexture = TextureLoader.getFallbackTexture();
+            usesTexture = true;
+            return true;
+        }
+
         try {
             glTexture = TextureLoader.loadTexture(texturePath);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
+
         textureLoaded = true;
         return true;
     }

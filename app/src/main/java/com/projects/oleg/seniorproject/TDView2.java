@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.hardware.camera2.CameraAccessException;
 import android.opengl.GLES20;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import com.projects.oleg.seniorproject.Camera.CameraImage;
 import com.projects.oleg.seniorproject.Camera.FrontCamera;
@@ -13,6 +14,7 @@ import com.projects.oleg.seniorproject.Rendering.Geometry.Box;
 import com.projects.oleg.seniorproject.Rendering.Geometry.Cube;
 import com.projects.oleg.seniorproject.Rendering.Geometry.RenderableObj;
 import com.projects.oleg.seniorproject.Rendering.MGlSurfaceView;
+import com.projects.oleg.seniorproject.Rendering.Matrix;
 import com.projects.oleg.seniorproject.Rendering.ObjParser.Obj;
 import com.projects.oleg.seniorproject.Rendering.ObjParser.ObjLoader;
 import com.projects.oleg.seniorproject.Rendering.Texture.Texture;
@@ -22,6 +24,9 @@ import com.projects.oleg.seniorproject.openCV.FaceRecognitionListener;
 import com.projects.oleg.seniorproject.openCV.OpenCVThread;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Stack;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -29,13 +34,11 @@ import javax.microedition.khronos.opengles.GL10;
  * Created by Oleg Tolstov on 9:47 PM, 11/11/15. SeniorProject
  */
 public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener, ObjLoader.OnLoadingComplete {
-    private Cube[] cubes = new Cube[12];
     private Box box;
-    private Texture woodTexture;
-    private RenderableObj mModel;
-
     private volatile Object drawLock = new Object();
-    private volatile Obj toInit;
+    private volatile Stack<Obj> initList = new Stack<>();
+    private volatile ArrayList<RenderableObj> renderList = new ArrayList<>();
+    private Matrix lightSource = new Matrix();
 
     public TDView2(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -68,50 +71,44 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener, 
     @Override
     public void onInit(){
         super.onInit();
+        TextureLoader.initTextureLoader(getContext());
+        TextureLoader.createFallbackTexture();
         initCamera();
         Utils.print("Initializing scene");
         box = new Box();
         camera.createFrustrum(1, 100, -1, 1, -1, 1);
         box.getModelMatrix().setScale(screenWInches, screenHInches, 8);
-        positionCubes();
         camera.getMatrix().setPosition(0, 0, 0);
         Texture boxTexture = TextureLoader.loadTexture(R.drawable.cube_wood_texture);
         box.setTexture(boxTexture);
         Utils.print("Camera: " + camera);
-        ObjLoader.LoadObject(getContext(),"FlyTriangulated.obj",this);
+        ObjLoader.LoadObject(getContext(),"tiefighter.obj",this);
     }
-
-    private void positionCubes(){
-        woodTexture = TextureLoader.loadTexture(R.drawable.cube_texture);
-        float closest = 2;
-        float farthest = -10;
-        float leftMost = -screenWInches/2.0f;
-        float rightMost = screenWInches/2.0f;
-        float maxYOffset = screenHInches/2.0f;
-        for(int i = 0; i < cubes.length; i++){
-            cubes[i] = new Cube();
-            cubes[i].setTexture(woodTexture);
-            cubes[i].getModelMatrix().setPosition( leftMost + (((rightMost - leftMost)/cubes.length)*i), Utils.genRand(-maxYOffset,maxYOffset),Utils.genRand(farthest,closest));
-            cubes[i].getModelMatrix().setScale( screenHInches*.45f,screenHInches*.45f,1.0f);
-        }
-    }
-
     @Override
     public void onDrawFrame(GL10 gl) {
         super.onDrawFrame(gl);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
         synchronized (drawLock) {
-            for(int i = 0; i < cubes.length; i++){
-            //    draw3D(cubes[i]);
+            //draw3D(box);
+            int initCount = 0;
+            while (!initList.isEmpty()){
+                Obj toInit = initList.pop();
+                RenderableObj nRenderable = new RenderableObj(toInit);
+                nRenderable.getModelMatrix().mulScale(screenWInches,screenHInches,6);
+                if(initCount == 1){
+                    nRenderable.getModelMatrix().mulScale(.5f,.5f,.5f);
+                    nRenderable.getModelMatrix().setPosition(-2,0,-8);
+                }
+                if(initCount == 2){
+                    nRenderable.getModelMatrix().mulScale(.5f,.5f,.5f);
+                    nRenderable.getModelMatrix().setPosition(2,0,-8);
+                }
+                renderList.add(nRenderable);
+                initCount++;
             }
-            draw3D(box);
-            if(toInit!=null){
-                mModel = new RenderableObj(toInit);
-                toInit = null;
-            }
-            if(mModel!=null) {
-                drawRenderableObj(mModel);
+            for(int i = 0; i < renderList.size(); i++){
+                drawRenderableObj(renderList.get(i), lightSource);
             }
         }
     }
@@ -147,7 +144,6 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener, 
             lastSigY = headPosition[1];
             lastSigZ = headPosition[2];
             Utils.print("Face detected: " + headPosition[0] + ", " + headPosition[1] + ", " + headPosition[2]);
-            //camera.getMatrix().setPosition(0, 0, headPosition[2]);
             camera.getMatrix().setPosition( headPosition[0]*1f,headPosition[1]*1f,-headPosition[2]);
             float dCoeff    =  1.0f / headPosition[2];
             dCoeff = 1f;
@@ -161,8 +157,11 @@ public class TDView2 extends MGlSurfaceView implements FaceRecognitionListener, 
 
     @Override
     public void onLoaded(Obj o) {
+        Log.d("TDView2","Object loaded");
         synchronized (drawLock){
-            toInit = o;
+            initList.push(o);
+            initList.push(o);
+            initList.push(o);
         }
     }
 }

@@ -8,6 +8,9 @@ import com.projects.oleg.seniorproject.Utils;
 public class Matrix {
     private float[] matrix = new float[16];
     private float[] scale = {1,1,1};
+    private float[] posBuffer = new float[4];
+    private float[] forwardBuffer = new float[4];
+
 
     public  Matrix(){
         android.opengl.Matrix.setIdentityM(matrix,0);
@@ -27,8 +30,18 @@ public class Matrix {
         matrix[14] = z;
     }
 
+    public float[] getForward(){
+        System.arraycopy(matrix,8,forwardBuffer,0,4);
+        return forwardBuffer;
+    }
+
     public void getInverse(float[] out){
         android.opengl.Matrix.invertM(out,0,matrix,0);
+    }
+
+    public float[] getPosBuffer(){
+        System.arraycopy(matrix,12,posBuffer,0,4);
+        return posBuffer;
     }
 
     public void transpose(float[] out){

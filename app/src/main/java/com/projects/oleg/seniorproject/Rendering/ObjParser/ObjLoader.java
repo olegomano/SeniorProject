@@ -89,9 +89,8 @@ public class ObjLoader extends Thread{
                     obj.setMatLib( new MaterialLib(context,lineSplit[1]) );
                 }else if(lineSplit[0].compareTo(OBJECT)==0){
                     Utils.print("Object name: " + lineSplit[1]);
-                    obj.setName(lineSplit[1]);
+                    obj.name = lineSplit[1];
                 }else if(lineSplit[0].compareTo(FACE)==0){
-               //     Utils.print("parcing face");
                     float[] faceTris = parseFace(lineSplit,vertexList,normalList,uvList);
                     for(int i = 0; i < faceTris.length;i++){
                         obj.getCurrGroup().floatBuffer.add(faceTris[i]);
@@ -140,23 +139,18 @@ public class ObjLoader extends Thread{
     private float[] parseFace(String[] face, ArrayList<Float> verts, ArrayList<Float> normals, ArrayList<Float> uv){//returns array of format vx,vy,vz,vw,nx,ny,nz,nw,ux,uy
         boolean hasUV = false;
         boolean hasNorm = false;
-       // Utils.print("Parsing face: ");
-       // Utils.print("Vertex List length: " + verts.size());
         for(int i = 0; i < face.length; i++){
             Utils.print("   " + face[i]);
         }
         for(int i = 0; i < vertINDX.length;i++){
-        //    Utils.print("Processing node " + face[i+1]);
             String[] faceNode = face[i+1].split("/");
             switch (faceNode.length){
                 case 1:
                     vertINDX[i] = Integer.parseInt(faceNode[0]);
-              //      Utils.print("Vert");
                     break;
                 case 2:
                     vertINDX[i] = Integer.parseInt(faceNode[0]);
                     uvINDX[i] = Integer.parseInt(faceNode[1]);
-           //         Utils.print("Vert/UV");
                     hasUV = true;
                     break;
                 case 3:
@@ -164,16 +158,13 @@ public class ObjLoader extends Thread{
                     normINDX[i] = Integer.parseInt(faceNode[2]);
                     if(faceNode[1].compareTo("")!=0) {
                         uvINDX[i] = Integer.parseInt(faceNode[1]);
-            //            Utils.print("Vert/UV/Norm");
                         hasUV = true;
                         hasNorm = true;
                     }else{
-           //             Utils.print("Vert//Norm");
                         hasNorm = true;
                     }
                     break;
             }
-            //Utils.print("parsed line: v/uv/n: " + vertINDX[i] + "/"+uvINDX[i] + "/" + normINDX[i]);
         }
 
        int vertCount = 0;
@@ -188,9 +179,12 @@ public class ObjLoader extends Thread{
                 float normY = normals.get((normINDX[mIndex]-1)*3 + 1);
                 float normZ = normals.get((normINDX[mIndex]-1)*3 + 2);
 
-
-                float uvX = uv.get((uvINDX[mIndex]-1)*2); //uvX
-                float uvY = uv.get((uvINDX[mIndex]-1)*2 + 1); //uvX
+                float uvX = 0;
+                float uvY = 0;
+                if(hasUV) {
+                    uvX = uv.get((uvINDX[mIndex] - 1) * 2); //uvX
+                    uvY = uv.get((uvINDX[mIndex] - 1) * 2 + 1); //uvX
+                }
                 /*
                 Utils.print(
                             "Created Vertex((vx,vy,vz),(nx,ny,nz),(uvX,uvY)): \n"
@@ -206,7 +200,7 @@ public class ObjLoader extends Thread{
 
                 returnVal[vertCount*10 + 4] = normX;
                 returnVal[vertCount*10 + 5] = normY;
-                returnVal[vertCount*10 + 6] = normY;
+                returnVal[vertCount*10 + 6] = normZ;
                 returnVal[vertCount*10 + 7] = 1;
 
                 returnVal[vertCount*10 + 8] = uvX;
